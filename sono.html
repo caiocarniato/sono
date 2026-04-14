@@ -7,203 +7,84 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Sono">
 <title>Sono</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root {
-  --bg: #0a0a0b;
-  --surface: #111113;
-  --surface2: #18181c;
-  --border: rgba(255,255,255,0.06);
-  --border2: rgba(255,255,255,0.12);
-  --text: #e8e6e0;
-  --muted: rgba(232,230,224,0.38);
-  --accent: #c9a96e;
-  --accent2: #7eb8a4;
-  --accent3: #9b8ec4;
-  --deep: #4a7fa5;
-  --rem: #7eb8a4;
-  --light: #5a5a6e;
-  --red: #c46a5a;
-  --r: 12px;
+:root{
+  --bg:#0a0a0b;--surface:#111113;--surface2:#18181c;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --text:#e8e6e0;--muted:rgba(232,230,224,0.38);
+  --accent:#c9a96e;--accent2:#7eb8a4;--accent3:#9b8ec4;
+  --deep:#4a7fa5;--rem:#7eb8a4;--ls:#5a5a6e;--red:#c46a5a;--r:12px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { background: var(--bg); }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-weight: 300;
-  min-height: 100vh;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  overflow-x: hidden;
-}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{background:var(--bg);}
+body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-weight:300;min-height:100vh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");}
+.app{position:relative;z-index:1;max-width:500px;margin:0 auto;padding:32px 18px 80px;}
 
-/* GRAIN OVERLAY */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.5;
-}
+header{margin-bottom:28px;}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+.title{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:300;letter-spacing:-.02em;line-height:1;}
+.title span{color:var(--accent);}
+.sync-btn{background:none;border:1px solid var(--border2);color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;padding:6px 12px;border-radius:20px;cursor:pointer;transition:all .2s;letter-spacing:.06em;}
+.sync-btn:hover{border-color:var(--accent);color:var(--accent);}
+.subtitle{font-size:9px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:5px;}
+.last-sync{font-size:9px;color:var(--muted);opacity:.4;margin-top:3px;}
 
-.app { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 32px 20px 60px; }
+.period-tabs{display:flex;gap:5px;margin-bottom:24px;overflow-x:auto;padding-bottom:2px;}
+.period-tabs::-webkit-scrollbar{display:none;}
+.tab{background:none;border:1px solid var(--border2);color:var(--muted);font-family:'DM Mono',monospace;font-size:9px;padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .15s;letter-spacing:.05em;white-space:nowrap;}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#0a0a0b;font-weight:400;}
+.tab:hover:not(.active){color:var(--text);}
 
-/* HEADER */
-header { margin-bottom: 40px; }
-.header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
-.title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 38px;
-  font-weight: 300;
-  letter-spacing: -0.02em;
-  color: var(--text);
-  line-height: 1;
-}
-.title span { color: var(--accent); }
-.sync-btn {
-  background: none;
-  border: 1px solid var(--border2);
-  color: var(--muted);
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all .2s;
-  letter-spacing: .05em;
-}
-.sync-btn:hover { border-color: var(--accent); color: var(--accent); }
-.subtitle { font-size: 10px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; margin-top: 6px; }
-.last-sync { font-size: 9px; color: var(--muted); opacity: .5; margin-top: 3px; }
+#loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;}
+.ring{width:30px;height:30px;border:1px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.lt{font-size:9px;color:var(--muted);letter-spacing:.1em;}
 
-/* LOADING */
-#loading {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  height: 60vh; gap: 16px;
-}
-.loading-ring {
-  width: 36px; height: 36px;
-  border: 1px solid var(--border2);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 10px; color: var(--muted); letter-spacing: .1em; }
+.scores{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 15px;position:relative;overflow:hidden;}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--lc,var(--accent)),transparent);opacity:.5;}
+.sl{font-size:8px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+.sv{font-family:'Cormorant Garamond',serif;font-size:29px;font-weight:300;line-height:1;}
+.su{font-size:12px;color:var(--muted);margin-left:2px;}
+.sd{font-size:8px;margin-top:5px;color:var(--muted);}
+.up{color:var(--accent2);}.down{color:var(--red);}
 
-/* SCORECARDS */
-.scores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-.score-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 16px;
-  position: relative;
-  overflow: hidden;
-  animation: fadeUp .4s ease both;
-}
-.score-card::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent-line, var(--accent)), transparent);
-  opacity: .4;
-}
-.score-label { font-size: 9px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
-.score-value {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 32px;
-  font-weight: 300;
-  line-height: 1;
-  color: var(--text);
-}
-.score-value .unit { font-size: 14px; color: var(--muted); margin-left: 3px; }
-.score-delta { font-size: 9px; margin-top: 6px; }
-.delta-up { color: var(--accent2); }
-.delta-down { color: var(--red); }
+.section{margin-bottom:18px;animation:fadeUp .35s ease both;}
+.sl2{font-size:8px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:9px;display:flex;align-items:center;gap:8px;}
+.sl2::after{content:'';flex:1;height:1px;background:var(--border);}
 
-/* SECTION */
-.section { margin-bottom: 24px; animation: fadeUp .4s ease both; }
-.section-label {
-  font-size: 9px; color: var(--muted);
-  letter-spacing: .14em; text-transform: uppercase;
-  margin-bottom: 12px;
-  display: flex; align-items: center; gap: 8px;
-}
-.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.cc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:8px;}
+.ct{font-size:8px;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;margin-bottom:12px;}
+canvas{display:block;}
 
-/* CHART CARDS */
-.chart-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 20px;
-  margin-bottom: 10px;
-}
-.chart-title { font-size: 10px; color: var(--muted); letter-spacing: .08em; margin-bottom: 16px; text-transform: uppercase; }
-.chart-wrap { position: relative; }
+.stage-bar{height:6px;border-radius:3px;overflow:hidden;display:flex;margin:6px 0 10px;}
+.stage-seg{height:100%;}
+.stage-legend{display:flex;gap:12px;flex-wrap:wrap;}
+.leg{display:flex;align-items:center;gap:4px;font-size:8px;color:var(--muted);}
+.ld{width:5px;height:5px;border-radius:50%;}
 
-/* STAGE BAR */
-.stage-bar { height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin: 8px 0 12px; }
-.stage-seg { height: 100%; transition: width .6s ease; }
-.stage-legend { display: flex; gap: 16px; }
-.leg { display: flex; align-items: center; gap: 5px; font-size: 9px; color: var(--muted); }
-.leg-dot { width: 6px; height: 6px; border-radius: 50%; }
+.hm-day-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px;}
+.hm-day-label{font-size:7px;color:var(--muted);text-align:center;}
+.heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.hm-cell{aspect-ratio:1;border-radius:2px;background:var(--surface2);}
 
-/* HEATMAP */
-.heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-.hm-cell {
-  aspect-ratio: 1;
-  border-radius: 2px;
-  background: var(--surface2);
-  position: relative;
-}
-.hm-day-labels { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 4px; }
-.hm-day-label { font-size: 7px; color: var(--muted); text-align: center; letter-spacing: .04em; }
+.ins{background:linear-gradient(135deg,rgba(201,169,110,.05),rgba(126,184,164,.03));border:1px solid rgba(201,169,110,.12);border-radius:var(--r);padding:14px 15px;margin-bottom:18px;}
+.ins-title{font-size:8px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;}
+.ins-text{font-size:11px;color:var(--muted);line-height:1.75;}
+.ins-text strong{color:var(--text);font-weight:400;}
 
-/* INSIGHT STRIP */
-.insight-strip {
-  background: linear-gradient(135deg, rgba(201,169,110,.06), rgba(126,184,164,.04));
-  border: 1px solid rgba(201,169,110,.15);
-  border-radius: var(--r);
-  padding: 16px;
-  margin-bottom: 24px;
-}
-.insight-title { font-size: 9px; color: var(--accent); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
-.insight-text { font-size: 11px; color: var(--muted); line-height: 1.7; }
-.insight-text strong { color: var(--text); font-weight: 400; }
+.mt{width:100%;border-collapse:collapse;font-size:9px;}
+.mt th{color:var(--muted);font-weight:300;letter-spacing:.07em;text-transform:uppercase;padding:5px 7px;text-align:right;border-bottom:1px solid var(--border);}
+.mt th:first-child{text-align:left;}
+.mt td{padding:6px 7px;text-align:right;border-bottom:1px solid var(--border);color:var(--text);}
+.mt td:first-child{text-align:left;color:var(--muted);}
+.mt tr:last-child td{border-bottom:none;}
+.gc{color:var(--accent2)!important;}.bc{color:var(--red)!important;}.nc{color:var(--accent)!important;}
 
-/* TREND PILLS */
-.trend-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-.trend-pill {
-  font-size: 9px; padding: 4px 10px;
-  border-radius: 20px; border: 1px solid var(--border2);
-  color: var(--muted); letter-spacing: .04em;
-}
-.trend-pill.good { border-color: rgba(126,184,164,.3); color: var(--accent2); }
-.trend-pill.warn { border-color: rgba(196,106,90,.3); color: var(--red); }
-.trend-pill.neutral { border-color: rgba(201,169,110,.3); color: var(--accent); }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.section:nth-child(1) { animation-delay: .05s; }
-.section:nth-child(2) { animation-delay: .1s; }
-.section:nth-child(3) { animation-delay: .15s; }
-.section:nth-child(4) { animation-delay: .2s; }
-.section:nth-child(5) { animation-delay: .25s; }
-
-canvas { display: block; }
-
-/* ERROR */
-#error-msg { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 11px; line-height: 1.8; }
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 </style>
 </head>
 <body>
@@ -211,440 +92,341 @@ canvas { display: block; }
   <header>
     <div class="header-top">
       <div class="title">sono<span>.</span></div>
-      <button class="sync-btn" onclick="loadData()">↻ sincronizar</button>
+      <button class="sync-btn" onclick="loadData()">↻ sync</button>
     </div>
     <div class="subtitle">análise integrativa · fitbit</div>
-    <div class="last-sync" id="last-sync">—</div>
+    <div class="last-sync" id="ls">—</div>
   </header>
-
-  <div id="loading">
-    <div class="loading-ring"></div>
-    <div class="loading-text">carregando dados...</div>
+  <div id="loading"><div class="ring"></div><div class="lt">carregando...</div></div>
+  <div id="main" style="display:none">
+    <div class="period-tabs" id="tabs"></div>
+    <div id="dash"></div>
   </div>
-
-  <div id="dashboard" style="display:none"></div>
 </div>
-
 <script>
-const SHEET_ID = '1hPbBeSYai8n_GpzLWLCAb1ny-4shnWlxeS4BAVdMFEc';
-const GID = '258378049';
-const DIRECT = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
-const URL = `https://corsproxy.io/?${encodeURIComponent(DIRECT)}`;
+const SID='1hPbBeSYai8n_GpzLWLCAb1ny-4shnWlxeS4BAVdMFEc', GID='258378049';
+const URL=`https://corsproxy.io/?${encodeURIComponent(`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${GID}`)}`;
+let ALL=[], CUR='30d', CHARTS=[];
 
-let rawData = [];
+const n=v=>parseFloat(v)||0;
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+function minToH(m){if(m<60)return Math.round(m)+'min';const h=Math.floor(m/60),mm=Math.round(m%60);return mm?`${h}h${String(mm).padStart(2,'0')}`:`${h}h`;}
+function fmtH(h){const hh=Math.floor(h),mm=Math.round((h-hh)*60);return mm?`${hh}h${String(mm).padStart(2,'0')}`:`${hh}h`;}
+function dlt(c,p,hi){if(!p)return'—';const d=c-p,pct=Math.abs(d/p*100).toFixed(0),up=d>=0,good=hi?up:!up;return`<span class="${good?'up':'down'}">${up?'↑':'↓'}${pct}% vs anterior</span>`;}
+function mKey(ds){const d=new Date(ds);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function mLabel(k){const[y,m]=k.split('-');return['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][+m-1]+' '+y.slice(2);}
+function qKey(ds){const d=new Date(ds);return`${d.getFullYear()} Q${Math.floor(d.getMonth()/3)+1}`;}
 
-async function loadData() {
-  document.getElementById('loading').style.display = 'flex';
-  document.getElementById('dashboard').style.display = 'none';
-  try {
-    const res = await fetch(URL);
-    const text = await res.text();
-    rawData = parseCSV(text);
-    render(rawData);
-    document.getElementById('last-sync').textContent = 'atualizado ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
-  } catch(e) {
-    document.getElementById('loading').innerHTML = `<div id="error-msg">Não foi possível carregar os dados.<br>Verifique se a planilha está pública.</div>`;
-  }
+function parseCSV(t){
+  const rows=t.trim().split('\n');
+  const hdr=rows[0].split(',').map(h=>h.replace(/"/g,'').trim());
+  return rows.slice(1).map(row=>{
+    const v=[];let cur='',q=false;
+    for(const c of row){if(c==='"'){q=!q;}else if(c===','&&!q){v.push(cur);cur='';}else cur+=c;}
+    v.push(cur);
+    const o={};hdr.forEach((h,i)=>o[h]=(v[i]||'').replace(/"/g,'').trim());
+    return o;
+  }).filter(r=>r['Data']&&n(r['Min Dormido'])>60);
 }
 
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.replace(/"/g,'').trim());
-  return lines.slice(1).map(line => {
-    const vals = line.match(/(".*?"|[^,]+)(?=,|$)/g) || [];
-    const obj = {};
-    headers.forEach((h,i) => {
-      obj[h] = (vals[i]||'').replace(/"/g,'').trim();
-    });
-    return obj;
-  }).filter(r => r['Data'] && r['Min Dormido']);
+async function loadData(){
+  document.getElementById('loading').style.display='flex';
+  document.getElementById('main').style.display='none';
+  try{
+    const r=await fetch(URL);
+    const t=await r.text();
+    ALL=parseCSV(t).sort((a,b)=>new Date(a['Data'])-new Date(b['Data']));
+    buildTabs();render(CUR);
+    document.getElementById('ls').textContent='atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('loading').style.display='none';
+    document.getElementById('main').style.display='block';
+  }catch(e){document.getElementById('loading').innerHTML=`<div style="text-align:center;color:var(--muted);font-size:11px;line-height:2">Erro ao carregar.<br>${e.message}</div>`;}
 }
 
-function n(v) { return parseFloat(v) || 0; }
+const PERIODS=[{id:'7d',l:'7 dias'},{id:'30d',l:'30 dias'},{id:'90d',l:'90 dias'},{id:'6m',l:'6 meses'},{id:'1y',l:'1 ano'},{id:'all',l:'tudo'},{id:'monthly',l:'por mês'},{id:'quarterly',l:'por quarter'}];
+function buildTabs(){document.getElementById('tabs').innerHTML=PERIODS.map(p=>`<button class="tab${p.id===CUR?' active':''}" onclick="sw('${p.id}')">${p.l}</button>`).join('');}
+function sw(p){CUR=p;buildTabs();render(p);}
 
-function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function fd(p){
+  const last=new Date(ALL[ALL.length-1]['Data']);
+  if(p==='7d')  return ALL.filter(r=>new Date(r['Data'])>=new Date(last-7*864e5));
+  if(p==='30d') return ALL.filter(r=>new Date(r['Data'])>=new Date(last-30*864e5));
+  if(p==='90d') return ALL.filter(r=>new Date(r['Data'])>=new Date(last-90*864e5));
+  if(p==='6m')  return ALL.filter(r=>new Date(r['Data'])>=new Date(last-183*864e5));
+  if(p==='1y')  return ALL.filter(r=>new Date(r['Data'])>=new Date(last-365*864e5));
+  return ALL;
+}
 
-function render(data) {
-  // Sort by date
-  data.sort((a,b) => new Date(a['Data']) - new Date(b['Data']));
-  const last30 = data.slice(-30);
-  const last7 = data.slice(-7);
-  const prev7 = data.slice(-14,-7);
-  const latest = data[data.length-1];
+function dc(extra={}){
+  return{responsive:true,maintainAspectRatio:false,animation:{duration:450},
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#18181c',borderColor:'rgba(255,255,255,.07)',borderWidth:1,titleColor:'#e8e6e0',bodyColor:'rgba(232,230,224,.5)',padding:10,titleFont:{family:'DM Mono',size:9},bodyFont:{family:'DM Mono',size:8}},...(extra.plugins||{})},
+    scales:{x:{grid:{color:'rgba(255,255,255,.025)'},border:{display:false},ticks:{color:'rgba(232,230,224,.22)',font:{family:'DM Mono',size:7},maxTicksLimit:8,maxRotation:0}},y:{grid:{color:'rgba(255,255,255,.025)'},border:{display:false},ticks:{color:'rgba(232,230,224,.22)',font:{family:'DM Mono',size:7},maxTicksLimit:4}}},...extra};
+}
+const LEGO={display:true,labels:{color:'rgba(232,230,224,.3)',font:{family:'DM Mono',size:7},boxWidth:5,boxHeight:5,padding:10}};
 
-  // Computed
-  const avgSleep = avg(last7.map(r=>n(r['Min Dormido'])))/60;
-  const prevSleep = avg(prev7.map(r=>n(r['Min Dormido'])))/60;
-  const avgEff = avg(last7.map(r=>n(r['Eficiência %'])));
-  const prevEff = avg(prev7.map(r=>n(r['Eficiência %'])));
-  const avgDeep = avg(last7.map(r=>n(r['Deep (min)'])));
-  const avgRem = avg(last7.map(r=>n(r['REM (min)'])));
-  const avgLight = avg(last7.map(r=>n(r['Light (min)'])));
-  const avgBpm = avg(last7.map(r=>n(r['BPM Repouso'])));
-  const prevBpm = avg(prev7.map(r=>n(r['BPM Repouso'])));
+function destroyAll(){CHARTS.forEach(c=>c.destroy());CHARTS=[];}
+function el(tag,cls){const e=document.createElement(tag);if(cls)e.className=cls;return e;}
+function sec(lbl){const s=el('div','section');s.innerHTML=`<div class="sl2">${lbl}</div>`;return s;}
+function ccard(parent,title,h,cb){
+  const id='c'+Math.random().toString(36).slice(2,8);
+  const c=el('div','cc');
+  c.innerHTML=`<div class="ct">${title}</div><div style="position:relative;height:${h}px"><canvas id="${c.id=id}"></canvas></div>`;
+  parent.appendChild(c);
+  requestAnimationFrame(()=>cb(id));
+}
+function scard(lbl,val,unit,sub,color){return`<div class="sc" style="--lc:${color}"><div class="sl">${lbl}</div><div class="sv">${val}${unit?`<span class="su">${unit}</span>`:''}</div><div class="sd">${sub}</div></div>`;}
 
-  // Deep% and REM% of total sleep
-  const avgSleepMin = avg(last7.map(r=>n(r['Min Dormido'])));
-  const deepPct = avgSleepMin > 0 ? avgDeep/avgSleepMin*100 : 0;
-  const remPct = avgSleepMin > 0 ? avgRem/avgSleepMin*100 : 0;
-  const lightPct = avgSleepMin > 0 ? avgLight/avgSleepMin*100 : 0;
+function render(p){
+  destroyAll();
+  const d=document.getElementById('dash');d.innerHTML='';
+  if(p==='monthly'||p==='quarterly') return renderAgg(d,p);
+  const data=fd(p);
+  if(!data.length){d.innerHTML='<div style="color:var(--muted);font-size:11px;padding:20px 0">Sem dados.</div>';return;}
 
-  // Insights
-  const insights = [];
-  if (deepPct < 13) insights.push({text: `Deep em <strong>${deepPct.toFixed(0)}%</strong> — abaixo do ideal (≥13%). Investigar carga inflamatória ou cortisol tardio.`, type:'warn'});
-  else insights.push({text: `Deep em <strong>${deepPct.toFixed(0)}%</strong> — dentro da faixa restaurativa.`, type:'good'});
-  if (remPct < 20) insights.push({text: `REM em <strong>${remPct.toFixed(0)}%</strong> — abaixo do ideal (≥20%). Suporte ao processamento emocional recomendado.`, type:'warn'});
-  else insights.push({text: `REM em <strong>${remPct.toFixed(0)}%</strong> — consolidação emocional adequada.`, type:'good'});
-  if (avgBpm > 60) insights.push({text: `BPM de repouso elevado (<strong>${avgBpm.toFixed(0)} bpm</strong>) pode indicar dominância simpática.`, type:'warn'});
+  const half=Math.floor(data.length/2);
+  const c=data.slice(half),pr=data.slice(0,half);
+  const G=field=>avg(c.map(r=>n(r[field])).filter(x=>x>0));
+  const Gp=field=>avg(pr.map(r=>n(r[field])).filter(x=>x>0));
 
-  // HTML START
-  const d = document.getElementById('dashboard');
-  d.innerHTML = '';
+  const aS=G('Min Dormido')/60,pS=Gp('Min Dormido')/60;
+  const aE=G('Eficiência %'),pE=Gp('Eficiência %');
+  const aB=G('BPM Repouso'),pB=Gp('BPM Repouso');
+  const aA=G('Min Acordado'),pA=Gp('Min Acordado');
+  const aD=G('Deep (min)'),aR=G('REM (min)');
+  const aM=G('Min Dormido');
+  const dPct=aM?aD/aM*100:0, rPct=aM?aR/aM*100:0;
 
-  // SCORECARDS
-  const scores = document.createElement('div');
-  scores.className = 'scores';
-  scores.innerHTML = `
-    ${scoreCard('sono médio', avgSleep.toFixed(1), 'h', delta(avgSleep, prevSleep, true), '#c9a96e')}
-    ${scoreCard('eficiência', avgEff.toFixed(0), '%', delta(avgEff, prevEff, true), '#7eb8a4')}
-    ${scoreCard('deep sleep', avgDeep.toFixed(0), 'min', deepPct.toFixed(0)+'% do total', '#4a7fa5')}
-    ${scoreCard('bpm repouso', avgBpm.toFixed(0), '', delta(avgBpm, prevBpm, false), '#9b8ec4')}
-  `;
-  d.appendChild(scores);
-
-  // TREND PILLS
-  const trendRow = document.createElement('div');
-  trendRow.className = 'trend-row';
-  trendRow.innerHTML = insights.map(i =>
-    `<span class="trend-pill ${i.type}">${i.text.replace(/<[^>]+>/g,'')}</span>`
-  ).join('');
-  d.appendChild(trendRow);
+  // SCORES
+  const sc=el('div','scores');
+  sc.innerHTML=scard('sono médio',fmtH(aS),'',dlt(aS,pS,true),'#c9a96e')+
+               scard('eficiência',aE.toFixed(0),'%',dlt(aE,pE,true),'#7eb8a4')+
+               scard('bpm repouso',aB.toFixed(0),'bpm',dlt(aB,pB,false),'#9b8ec4')+
+               scard('acordado',minToH(aA),'',dlt(aA,pA,false),'#c46a5a');
+  d.appendChild(sc);
 
   // INSIGHT
-  if (insights.length > 0) {
-    const ins = document.createElement('div');
-    ins.className = 'insight-strip';
-    ins.innerHTML = `<div class="insight-title">análise integrativa · 7 dias</div><div class="insight-text">${insights.map(i=>i.text).join('<br><br>')}</div>`;
-    d.appendChild(ins);
-  }
+  const ins=[];
+  if(dPct<13) ins.push(`Deep em <strong>${dPct.toFixed(0)}%</strong> — abaixo do ideal ≥13%. Investigar cortisol tardio ou inflamação.`);
+  else ins.push(`Deep em <strong>${dPct.toFixed(0)}%</strong> — faixa restaurativa adequada.`);
+  if(rPct<20) ins.push(`REM em <strong>${rPct.toFixed(0)}%</strong> — abaixo do ideal ≥20%.`);
+  else ins.push(`REM em <strong>${rPct.toFixed(0)}%</strong> — consolidação emocional ok.`);
+  if(aB>58) ins.push(`BPM médio de <strong>${aB.toFixed(0)}</strong> — avalie dominância simpática.`);
+  if(aA>45) ins.push(`Acordado <strong>${minToH(aA)}</strong>/noite em média — fragmentação elevada.`);
+  const ie=el('div','ins');
+  ie.innerHTML=`<div class="ins-title">análise integrativa</div><div class="ins-text">${ins.join('<br>')}</div>`;
+  d.appendChild(ie);
 
-  // SECTION 1 — Arquitetura do sono
-  const s1 = section('arquitetura do sono');
+  const long=data.length>60;
+  const labels=data.map(r=>{const dt=new Date(r['Data']);return`${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;});
 
-  // Stage composition bar (last night)
-  const latDeep = n(latest['Deep (min)']);
-  const latRem = n(latest['REM (min)']);
-  const latLight = n(latest['Light (min)']);
-  const latTotal = latDeep + latRem + latLight || 1;
-  s1.innerHTML += `
-    <div class="chart-card">
-      <div class="chart-title">composição da noite passada</div>
-      <div class="stage-bar">
-        <div class="stage-seg" style="width:${latDeep/latTotal*100}%;background:var(--deep)"></div>
-        <div class="stage-seg" style="width:${latRem/latTotal*100}%;background:var(--rem)"></div>
-        <div class="stage-seg" style="width:${latLight/latTotal*100}%;background:var(--light)"></div>
-      </div>
-      <div class="stage-legend">
-        <div class="leg"><div class="leg-dot" style="background:var(--deep)"></div>deep ${latDeep}min</div>
-        <div class="leg"><div class="leg-dot" style="background:var(--rem)"></div>rem ${latRem}min</div>
-        <div class="leg"><div class="leg-dot" style="background:var(--light)"></div>light ${latLight}min</div>
-      </div>
+  // DURAÇÃO
+  const s1=sec('duração do sono');
+  // last night
+  const lat=data[data.length-1];
+  const ld=n(lat['Deep (min)']),lr=n(lat['REM (min)']),ll=n(lat['Light (min)']),lt2=ld+lr+ll||1;
+  const nb=el('div','cc');
+  nb.innerHTML=`<div class="ct">última noite — ${minToH(n(lat['Min Dormido']))} dormidos · ${minToH(n(lat['Min Acordado']))} acordado</div>
+    <div class="stage-bar">
+      <div class="stage-seg" style="width:${ld/lt2*100}%;background:var(--deep)"></div>
+      <div class="stage-seg" style="width:${lr/lt2*100}%;background:var(--rem)"></div>
+      <div class="stage-seg" style="width:${ll/lt2*100}%;background:var(--ls)"></div>
     </div>
-    <div class="chart-card">
-      <div class="chart-title">estágios — 30 dias (min)</div>
-      <div class="chart-wrap"><canvas id="c-stages" height="160"></canvas></div>
-    </div>
-  `;
+    <div class="stage-legend">
+      <div class="leg"><div class="ld" style="background:var(--deep)"></div>deep ${minToH(ld)} (${(ld/lt2*100).toFixed(0)}%)</div>
+      <div class="leg"><div class="ld" style="background:var(--rem)"></div>rem ${minToH(lr)} (${(lr/lt2*100).toFixed(0)}%)</div>
+      <div class="leg"><div class="ld" style="background:var(--ls)"></div>light ${minToH(ll)} (${(ll/lt2*100).toFixed(0)}%)</div>
+    </div>`;
+  s1.appendChild(nb);
+  ccard(s1,'sono dormido × acordado (h)',175,id=>{
+    CHARTS.push(new Chart(document.getElementById(id),{type:'bar',
+      data:{labels,datasets:[
+        {label:'Dormido',data:data.map(r=>+(n(r['Min Dormido'])/60).toFixed(2)),backgroundColor:'rgba(126,184,164,.72)',stack:'s',borderRadius:2,borderSkipped:false},
+        {label:'Acordado',data:data.map(r=>+(n(r['Min Acordado'])/60).toFixed(2)),backgroundColor:'rgba(196,106,90,.5)',stack:'s',borderRadius:2,borderSkipped:false},
+      ]},
+      options:{...dc({plugins:{legend:LEGO}}),scales:{...dc().scales,y:{...dc().scales.y,ticks:{...dc().scales.y.ticks,callback:v=>v+'h'}}}}
+    }));
+  });
   d.appendChild(s1);
 
-  // SECTION 2 — Qualidade
-  const s2 = section('qualidade & recuperação');
-  s2.innerHTML += `
-    <div class="chart-card">
-      <div class="chart-title">eficiência do sono — 30 dias</div>
-      <div class="chart-wrap"><canvas id="c-eff" height="130"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">bpm repouso — 30 dias</div>
-      <div class="chart-wrap"><canvas id="c-bpm" height="130"></canvas></div>
-    </div>
-  `;
+  // EFICIÊNCIA
+  const s2=sec('qualidade & eficiência');
+  ccard(s2,'eficiência do sono (%)',125,id=>{
+    CHARTS.push(new Chart(document.getElementById(id),{type:'line',
+      data:{labels,datasets:[{data:data.map(r=>n(r['Eficiência %'])),borderColor:'#7eb8a4',borderWidth:1.5,pointRadius:0,pointHoverRadius:3,fill:true,backgroundColor:'rgba(126,184,164,.05)',tension:.4}]},
+      options:{...dc(),scales:{...dc().scales,y:{...dc().scales.y,min:70,max:100,ticks:{...dc().scales.y.ticks,callback:v=>v+'%'}}}}
+    }));
+  });
   d.appendChild(s2);
 
-  // SECTION 3 — Circadiano
-  const s3 = section('ritmo circadiano');
-  s3.innerHTML += `
-    <div class="chart-card">
-      <div class="chart-title">horário de início do sono</div>
-      <div class="chart-wrap"><canvas id="c-circ" height="130"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">duração total — 30 dias (min)</div>
-      <div class="chart-wrap"><canvas id="c-dur" height="130"></canvas></div>
-    </div>
-  `;
+  // ESTÁGIOS
+  const s3=sec('arquitetura do sono');
+  ccard(s3,'deep · rem · light (h)',165,id=>{
+    CHARTS.push(new Chart(document.getElementById(id),{type:'bar',
+      data:{labels,datasets:[
+        {label:'Deep',data:data.map(r=>+(n(r['Deep (min)'])/60).toFixed(2)),backgroundColor:'rgba(74,127,165,.85)',stack:'s',borderRadius:2,borderSkipped:false},
+        {label:'REM', data:data.map(r=>+(n(r['REM (min)'])/60).toFixed(2)), backgroundColor:'rgba(126,184,164,.85)',stack:'s',borderRadius:2,borderSkipped:false},
+        {label:'Light',data:data.map(r=>+(n(r['Light (min)'])/60).toFixed(2)),backgroundColor:'rgba(90,90,110,.55)',stack:'s',borderRadius:2,borderSkipped:false},
+      ]},
+      options:{...dc({plugins:{legend:LEGO}}),scales:{...dc().scales,y:{...dc().scales.y,ticks:{...dc().scales.y.ticks,callback:v=>v+'h'}}}}
+    }));
+  });
   d.appendChild(s3);
 
-  // SECTION 4 — Heatmap
-  const s4 = section('mapa de eficiência');
-  const hmDiv = document.createElement('div');
-  hmDiv.className = 'chart-card';
-  hmDiv.innerHTML = `<div class="chart-title">eficiência diária — últimos 60 dias</div><div id="heatmap"></div>`;
-  s4.appendChild(hmDiv);
+  // BPM
+  const s4=sec('bpm de repouso');
+  ccard(s4,'bpm repouso',125,id=>{
+    CHARTS.push(new Chart(document.getElementById(id),{type:'line',
+      data:{labels,datasets:[{data:data.map(r=>n(r['BPM Repouso'])||null),borderColor:'#9b8ec4',borderWidth:1.5,pointRadius:0,pointHoverRadius:3,fill:true,backgroundColor:'rgba(155,142,196,.05)',tension:.4,spanGaps:true}]},
+      options:dc()
+    }));
+  });
   d.appendChild(s4);
 
-  // SECTION 5 — Scatter
-  const s5 = section('correlações');
-  s5.innerHTML += `
-    <div class="chart-card">
-      <div class="chart-title">eficiência × bpm repouso</div>
-      <div class="chart-wrap"><canvas id="c-scatter" height="160"></canvas></div>
-    </div>
-  `;
+  // CIRCADIANO
+  const s5=sec('ritmo circadiano');
+  ccard(s5,'horário de início do sono',125,id=>{
+    const circ=data.map(r=>{
+      const t=r['Início']||r['Inicio']||'';const m=t.match(/T(\d+):(\d+)/);
+      if(!m)return null;let h=+m[1],mm=+m[2];if(h<12)h+=24;return+(h+mm/60).toFixed(2);
+    });
+    CHARTS.push(new Chart(document.getElementById(id),{type:'line',
+      data:{labels,datasets:[{data:circ,borderColor:'#c9a96e',borderWidth:1.5,pointRadius:circ.length<50?2:0,pointBackgroundColor:'#c9a96e',pointHoverRadius:3,fill:false,tension:.3,spanGaps:true}]},
+      options:{...dc(),scales:{...dc().scales,y:{...dc().scales.y,min:19,max:27,
+        ticks:{...dc().scales.y.ticks,callback:v=>{const h=v>23?v-24:v;return`${Math.floor(h)}h${String(Math.round((h%1)*60)).padStart(2,'0')}`}}}}}
+    }));
+  });
   d.appendChild(s5);
 
-  document.getElementById('loading').style.display = 'none';
-  d.style.display = 'block';
-
-  // NOW DRAW CHARTS
-  const dates30 = last30.map(r => {
-    const d = r['Data'];
-    const parts = d.split('-');
-    return `${parts[2]}/${parts[1]}`;
+  // SCATTER BPM x Eficiência
+  const s6=sec('correlações');
+  ccard(s6,'eficiência × bpm repouso',155,id=>{
+    CHARTS.push(new Chart(document.getElementById(id),{type:'scatter',
+      data:{datasets:[{data:data.map(r=>({x:n(r['BPM Repouso']),y:n(r['Eficiência %'])})).filter(p=>p.x>0&&p.y>0),backgroundColor:'rgba(201,169,110,.45)',pointRadius:4,pointHoverRadius:6}]},
+      options:{...dc(),scales:{
+        x:{...dc().scales.x,title:{display:true,text:'bpm',color:'rgba(232,230,224,.2)',font:{family:'DM Mono',size:7}}},
+        y:{...dc().scales.y,min:70,max:100,title:{display:true,text:'eficiência %',color:'rgba(232,230,224,.2)',font:{family:'DM Mono',size:7}}}
+      }}
+    }));
   });
-
-  const chartDefaults = {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: 600 },
-    plugins: { legend: { display: false }, tooltip: {
-      backgroundColor: '#18181c',
-      borderColor: 'rgba(255,255,255,0.1)',
-      borderWidth: 1,
-      titleColor: '#e8e6e0',
-      bodyColor: 'rgba(232,230,224,0.6)',
-      titleFont: { family: 'DM Mono', size: 10 },
-      bodyFont: { family: 'DM Mono', size: 9 },
-      padding: 10,
-    }},
-    scales: {
-      x: {
-        grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
-        ticks: { color: 'rgba(232,230,224,0.3)', font: { family:'DM Mono', size:8 }, maxTicksLimit: 6, maxRotation: 0 },
-        border: { display: false }
-      },
-      y: {
-        grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
-        ticks: { color: 'rgba(232,230,224,0.3)', font: { family:'DM Mono', size:8 }, maxTicksLimit: 4 },
-        border: { display: false }
-      }
-    }
-  };
-
-  // STAGES CHART
-  new Chart(document.getElementById('c-stages'), {
-    type: 'bar',
-    data: {
-      labels: dates30,
-      datasets: [
-        { label:'Deep', data: last30.map(r=>n(r['Deep (min)'])), backgroundColor:'rgba(74,127,165,0.8)', stack:'s' },
-        { label:'REM',  data: last30.map(r=>n(r['REM (min)'])),  backgroundColor:'rgba(126,184,164,0.8)', stack:'s' },
-        { label:'Light',data: last30.map(r=>n(r['Light (min)'])),backgroundColor:'rgba(90,90,110,0.6)', stack:'s' },
-      ]
-    },
-    options: { ...chartDefaults, plugins: { ...chartDefaults.plugins, legend: { display:true, labels:{ color:'rgba(232,230,224,0.4)', font:{family:'DM Mono',size:8}, boxWidth:6, boxHeight:6, padding:12 } } } }
-  });
-
-  // EFFICIENCY
-  new Chart(document.getElementById('c-eff'), {
-    type: 'line',
-    data: {
-      labels: dates30,
-      datasets: [{
-        data: last30.map(r=>n(r['Eficiência %'])),
-        borderColor: '#7eb8a4',
-        borderWidth: 1.5,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        fill: true,
-        backgroundColor: 'rgba(126,184,164,0.06)',
-        tension: 0.4
-      }]
-    },
-    options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min:70, max:100 } } }
-  });
-
-  // BPM
-  new Chart(document.getElementById('c-bpm'), {
-    type: 'line',
-    data: {
-      labels: dates30,
-      datasets: [{
-        data: last30.map(r=>n(r['BPM Repouso'])),
-        borderColor: '#9b8ec4',
-        borderWidth: 1.5,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        fill: true,
-        backgroundColor: 'rgba(155,142,196,0.06)',
-        tension: 0.4
-      }]
-    },
-    options: chartDefaults
-  });
-
-  // CIRCADIAN — extract hour from Inicio
-  const circHours = last30.map(r => {
-    const t = r['Início'] || r['Inicio'] || '';
-    const match = t.match(/T(\d+):/);
-    if (match) {
-      let h = parseInt(match[1]);
-      // Normalize: if h < 12, treat as next-day (e.g. 1am = 25)
-      if (h < 12) h += 24;
-      return h;
-    }
-    return null;
-  }).filter(h => h !== null);
-
-  new Chart(document.getElementById('c-circ'), {
-    type: 'line',
-    data: {
-      labels: dates30.slice(-circHours.length),
-      datasets: [{
-        data: circHours,
-        borderColor: '#c9a96e',
-        borderWidth: 1.5,
-        pointRadius: 2,
-        pointBackgroundColor: '#c9a96e',
-        pointHoverRadius: 4,
-        fill: false,
-        tension: 0.3
-      }]
-    },
-    options: {
-      ...chartDefaults,
-      scales: {
-        ...chartDefaults.scales,
-        y: {
-          ...chartDefaults.scales.y,
-          min: 20, max: 27,
-          ticks: {
-            ...chartDefaults.scales.y.ticks,
-            callback: v => {
-              const h = v > 23 ? v - 24 : v;
-              return h + 'h';
-            }
-          }
-        }
-      }
-    }
-  });
-
-  // DURATION
-  new Chart(document.getElementById('c-dur'), {
-    type: 'bar',
-    data: {
-      labels: dates30,
-      datasets: [{
-        data: last30.map(r=>n(r['Min Dormido'])),
-        backgroundColor: last30.map(r => n(r['Min Dormido']) >= 420 ? 'rgba(126,184,164,0.7)' : 'rgba(196,106,90,0.6)'),
-        borderRadius: 3,
-        borderSkipped: false,
-      }]
-    },
-    options: {
-      ...chartDefaults,
-      plugins: { ...chartDefaults.plugins, annotation: {} }
-    }
-  });
+  d.appendChild(s6);
 
   // HEATMAP
-  buildHeatmap(data.slice(-60));
+  const s7=sec('mapa de eficiência');
+  const hc=el('div','cc');hc.innerHTML='<div class="ct">eficiência diária</div><div id="hm"></div>';
+  s7.appendChild(hc);d.appendChild(s7);
+  buildHM(data,'hm');
+}
 
-  // SCATTER
-  new Chart(document.getElementById('c-scatter'), {
-    type: 'scatter',
-    data: {
-      datasets: [{
-        data: last30.map(r => ({ x: n(r['BPM Repouso']), y: n(r['Eficiência %']) })),
-        backgroundColor: 'rgba(201,169,110,0.5)',
-        pointRadius: 5,
-        pointHoverRadius: 7,
-      }]
-    },
-    options: {
-      ...chartDefaults,
-      scales: {
-        x: { ...chartDefaults.scales.x, title: { display:true, text:'BPM', color:'rgba(232,230,224,0.2)', font:{family:'DM Mono',size:8} } },
-        y: { ...chartDefaults.scales.y, title: { display:true, text:'Eficiência %', color:'rgba(232,230,224,0.2)', font:{family:'DM Mono',size:8} }, min:70, max:100 }
-      }
-    }
+function renderAgg(d,mode){
+  const grp={};
+  ALL.forEach(r=>{const k=mode==='monthly'?mKey(r['Data']):qKey(r['Data']);(grp[k]=grp[k]||[]).push(r);});
+  const keys=Object.keys(grp).sort();
+  const labels=keys.map(k=>mode==='monthly'?mLabel(k):k);
+  const G=(k,f)=>avg(grp[k].map(r=>n(r[f])).filter(x=>x>0));
+
+  const sH=keys.map(k=>+(G(k,'Min Dormido')/60).toFixed(2));
+  const aH=keys.map(k=>+(G(k,'Min Acordado')/60).toFixed(2));
+  const eff=keys.map(k=>+G(k,'Eficiência %').toFixed(1));
+  const deep=keys.map(k=>+(G(k,'Deep (min)')/60).toFixed(2));
+  const rem=keys.map(k=>+(G(k,'REM (min)')/60).toFixed(2));
+  const light=keys.map(k=>+(G(k,'Light (min)')/60).toFixed(2));
+  const bpm=keys.map(k=>+G(k,'BPM Repouso').toFixed(1));
+  const dPct=keys.map((k,i)=>sH[i]>0?+(deep[i]/sH[i]*100).toFixed(1):0);
+  const rPct=keys.map((k,i)=>sH[i]>0?+(rem[i]/sH[i]*100).toFixed(1):0);
+
+  // TABLE
+  const s0=sec(mode==='monthly'?'resumo por mês':'resumo por quarter');
+  const tc=el('div','cc');
+  tc.innerHTML=`<div class="ct">médias consolidadas</div><div style="overflow-x:auto">
+    <table class="mt"><thead><tr><th>período</th><th>sono</th><th>efic</th><th>deep%</th><th>rem%</th><th>bpm</th><th>acordado</th></tr></thead>
+    <tbody>${keys.map((k,i)=>`<tr>
+      <td>${labels[i]}</td>
+      <td class="${sH[i]>=7?'gc':sH[i]<6?'bc':''}">${fmtH(sH[i])}</td>
+      <td class="${eff[i]>=90?'gc':eff[i]<85?'bc':''}">${eff[i]}%</td>
+      <td class="${dPct[i]>=13?'gc':dPct[i]<10?'bc':'nc'}">${dPct[i]}%</td>
+      <td class="${rPct[i]>=20?'gc':rPct[i]<15?'bc':'nc'}">${rPct[i]}%</td>
+      <td class="${bpm[i]&&bpm[i]<=55?'gc':bpm[i]>62?'bc':''}">${bpm[i]||'—'}</td>
+      <td class="${aH[i]<0.5?'gc':aH[i]>1?'bc':''}">${fmtH(aH[i])}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+  s0.appendChild(tc);d.appendChild(s0);
+
+  const s1=sec('duração média');
+  ccard(s1,'sono dormido × acordado (h)',175,id=>{
+    CHARTS.push(new Chart(document.getElementById(id),{type:'bar',
+      data:{labels,datasets:[
+        {label:'Dormido',data:sH,backgroundColor:'rgba(126,184,164,.72)',stack:'s',borderRadius:3,borderSkipped:false},
+        {label:'Acordado',data:aH,backgroundColor:'rgba(196,106,90,.5)',stack:'s',borderRadius:3,borderSkipped:false},
+      ]},
+      options:{...dc({plugins:{legend:LEGO}}),scales:{...dc().scales,y:{...dc().scales.y,ticks:{...dc().scales.y.ticks,callback:v=>v+'h'}}}}
+    }));
   });
+  d.appendChild(s1);
+
+  const s2=sec('arquitetura média');
+  ccard(s2,'deep · rem · light (h)',165,id=>{
+    CHARTS.push(new Chart(document.getElementById(id),{type:'bar',
+      data:{labels,datasets:[
+        {label:'Deep', data:deep, backgroundColor:'rgba(74,127,165,.85)',stack:'s',borderRadius:3,borderSkipped:false},
+        {label:'REM',  data:rem,  backgroundColor:'rgba(126,184,164,.85)',stack:'s',borderRadius:3,borderSkipped:false},
+        {label:'Light',data:light,backgroundColor:'rgba(90,90,110,.55)',stack:'s',borderRadius:3,borderSkipped:false},
+      ]},
+      options:{...dc({plugins:{legend:LEGO}}),scales:{...dc().scales,y:{...dc().scales.y,ticks:{...dc().scales.y.ticks,callback:v=>v+'h'}}}}
+    }));
+  });
+  d.appendChild(s2);
+
+  const s3=sec('qualidade dos estágios (%)');
+  ccard(s3,'deep% e rem% do sono total',140,id=>{
+    CHARTS.push(new Chart(document.getElementById(id),{type:'line',
+      data:{labels,datasets:[
+        {label:'Deep%',data:dPct,borderColor:'#4a7fa5',borderWidth:2,pointRadius:3,pointBackgroundColor:'#4a7fa5',fill:false,tension:.3},
+        {label:'REM%', data:rPct, borderColor:'#7eb8a4',borderWidth:2,pointRadius:3,pointBackgroundColor:'#7eb8a4',fill:false,tension:.3},
+      ]},
+      options:{...dc({plugins:{legend:LEGO}}),scales:{...dc().scales,y:{...dc().scales.y,ticks:{...dc().scales.y.ticks,callback:v=>v+'%'}}}}
+    }));
+  });
+  d.appendChild(s3);
+
+  const s4=sec('bpm de repouso');
+  ccard(s4,'bpm médio por período',130,id=>{
+    CHARTS.push(new Chart(document.getElementById(id),{type:'line',
+      data:{labels,datasets:[{data:bpm,borderColor:'#9b8ec4',borderWidth:2,pointRadius:4,pointBackgroundColor:'#9b8ec4',fill:true,backgroundColor:'rgba(155,142,196,.06)',tension:.3}]},
+      options:dc()
+    }));
+  });
+  d.appendChild(s4);
+
+  const s5=sec('eficiência');
+  ccard(s5,'eficiência média (%)',130,id=>{
+    CHARTS.push(new Chart(document.getElementById(id),{type:'line',
+      data:{labels,datasets:[{data:eff,borderColor:'#7eb8a4',borderWidth:2,pointRadius:4,pointBackgroundColor:'#7eb8a4',fill:true,backgroundColor:'rgba(126,184,164,.06)',tension:.3}]},
+      options:{...dc(),scales:{...dc().scales,y:{...dc().scales.y,min:75,max:100,ticks:{...dc().scales.y.ticks,callback:v=>v+'%'}}}}
+    }));
+  });
+  d.appendChild(s5);
 }
 
-function buildHeatmap(data) {
-  const hm = document.getElementById('heatmap');
-  const days = ['D','S','T','Q','Q','S','S'];
-  const dayLabels = document.createElement('div');
-  dayLabels.className = 'hm-day-labels';
-  days.forEach(d => { dayLabels.innerHTML += `<div class="hm-day-label">${d}</div>`; });
-  hm.appendChild(dayLabels);
-
-  const grid = document.createElement('div');
-  grid.className = 'heatmap';
-
-  // Find first Sunday before or on first date
-  const firstDate = new Date(data[0]['Data']);
-  const dayOfWeek = firstDate.getDay();
-  const startDate = new Date(firstDate);
-  startDate.setDate(startDate.getDate() - dayOfWeek);
-
-  const lastDate = new Date(data[data.length-1]['Data']);
-  const map = {};
-  data.forEach(r => { map[r['Data']] = n(r['Eficiência %']); });
-
-  let cur = new Date(startDate);
-  while (cur <= lastDate) {
-    const key = cur.toISOString().split('T')[0];
-    const val = map[key];
-    const cell = document.createElement('div');
-    cell.className = 'hm-cell';
-    if (val !== undefined) {
-      const norm = Math.max(0, Math.min(1, (val - 70) / 30));
-      if (norm > 0.6) cell.style.background = `rgba(126,184,164,${0.3 + norm*0.7})`;
-      else if (norm > 0.3) cell.style.background = `rgba(201,169,110,${0.3 + norm*0.5})`;
-      else cell.style.background = `rgba(196,106,90,${0.3 + (1-norm)*0.4})`;
-      cell.title = `${key}: ${val}%`;
+function buildHM(data,containerId){
+  const wrap=document.getElementById(containerId);if(!wrap)return;
+  const dl=el('div','hm-day-labels');
+  ['D','S','T','Q','Q','S','S'].forEach(d=>{const s=el('div','hm-day-label');s.textContent=d;dl.appendChild(s);});
+  wrap.appendChild(dl);
+  const grid=el('div','heatmap');
+  const map={};data.forEach(r=>{map[r['Data']]=n(r['Eficiência %']);});
+  const first=new Date(data[0]['Data']);first.setDate(first.getDate()-first.getDay());
+  const last=new Date(data[data.length-1]['Data']);
+  let cur=new Date(first);
+  while(cur<=last){
+    const key=cur.toISOString().split('T')[0],val=map[key];
+    const cell=el('div','hm-cell');
+    if(val!==undefined){
+      const norm=Math.max(0,Math.min(1,(val-70)/30));
+      cell.style.background=norm>0.6?`rgba(126,184,164,${.25+norm*.75})`:norm>0.3?`rgba(201,169,110,${.25+norm*.5})`:`rgba(196,106,90,${.3+(1-norm)*.4})`;
+      cell.title=`${key}: ${val}%`;
     }
-    grid.appendChild(cell);
-    cur.setDate(cur.getDate() + 1);
+    grid.appendChild(cell);cur.setDate(cur.getDate()+1);
   }
-  hm.appendChild(grid);
-}
-
-function section(label) {
-  const s = document.createElement('div');
-  s.className = 'section';
-  s.innerHTML = `<div class="section-label">${label}</div>`;
-  return s;
-}
-
-function scoreCard(label, value, unit, sub, color) {
-  return `<div class="score-card" style="--accent-line:${color}">
-    <div class="score-label">${label}</div>
-    <div class="score-value">${value}<span class="unit">${unit}</span></div>
-    <div class="score-delta" style="color:${color};opacity:.7;font-size:9px">${sub}</div>
-  </div>`;
-}
-
-function delta(cur, prev, higherGood) {
-  if (!prev) return '—';
-  const d = cur - prev;
-  const pct = Math.abs(d/prev*100).toFixed(0);
-  const up = d >= 0;
-  const good = higherGood ? up : !up;
-  const arrow = up ? '↑' : '↓';
-  return `<span class="${good?'delta-up':'delta-down'}">${arrow} ${pct}% vs semana anterior</span>`;
+  wrap.appendChild(grid);
 }
 
 loadData();
