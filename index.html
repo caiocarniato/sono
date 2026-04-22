@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PROTOCOL · Performance Integrativa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js"></script>
+
+<style>
+  :root{
+    --bone:#F2EFE8;
+    --ink:#0A0A0A;
+    --paper:#0E0E0D;
+    --char:#161614;
+    --line:#26251F;
+    --mute:#78746B;
+    --green:#B8D97A;
+    --amber:#D9A559;
+    --red:#CF5D4A;
+    --blue:#7FA7C9;
+  }
+  html,body{background:var(--paper);color:var(--bone);}
+  body{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    font-feature-settings:"ss01","ss02","cv01","cv02";
+    -webkit-font-smoothing:antialiased;
+  }
+  .font-display{font-family:'Fraunces', Georgia, serif; font-variation-settings:"opsz" 144;}
+  .font-mono{font-family:'JetBrains Mono', ui-monospace, monospace;}
+  .grain{
+    background-image:
+      radial-gradient(rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+  .hairline{border-color:var(--line);}
+  .tick{
+    background-image:linear-gradient(to right, var(--line) 1px, transparent 1px);
+    background-size: 8px 100%;
+  }
+  .num-tab{font-variant-numeric:tabular-nums;}
+  .dot-bg{
+    background-image: radial-gradient(var(--line) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .score-glow{
+    text-shadow: 0 0 80px rgba(184,217,122,.15);
+  }
+  .marquee-track{
+    animation: marquee 60s linear infinite;
+  }
+  @keyframes marquee{
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  .blink{animation: blink 1.4s steps(2,end) infinite;}
+  @keyframes blink{ 50%{opacity:0;} }
+  .reveal{ opacity:0; transform:translateY(8px); animation: reveal .7s ease forwards;}
+  @keyframes reveal{ to{opacity:1; transform:translateY(0);} }
+  .delay-1{animation-delay:.05s} .delay-2{animation-delay:.12s} .delay-3{animation-delay:.2s}
+  .delay-4{animation-delay:.3s} .delay-5{animation-delay:.42s} .delay-6{animation-delay:.55s}
+
+  /* custom scrollbar */
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:var(--paper)}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:0}
+
+  .tag{
+    font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--mute);
+  }
+</style>
+</head>
+<body class="min-h-screen">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useRef } = React;
+const {
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  AreaChart, Area, BarChart, Bar, ReferenceLine, CartesianGrid
+} = Recharts;
+
+/* ============================================================
+   CONFIG — trocar só se mudar a planilha
+   ============================================================ */
+const SHEET_ID  = "1hPbBeSYai8n_GpzLWLCAb1ny-4shnWlxeS4BAVdMFEc";
+const SHEET_GID = "258378049";
+const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
+const REFRESH_MS = 5 * 60 * 1000; // refetch a cada 5 min
+
+/* ============================================================
+   SCORE 0–100 · MEDICINA INTEGRATIVA
+   Pesos baseados em literatura de sleep medicine + HRV/RHR research
+   ============================================================ */
+// Pesos calibrados p/ Fitbit Inspire 2 (validado vs PSG)
+// Tiramos peso de Deep/REM (specificity baixa, ~50-59%) e
+// jogamos em Duração/RHR/Regularidade (medição confiável).
+const WEIGHTS = {
+  duration:   22, // sono efetivo (alvo 6h30-8h real)
+  efficiency: 20, // % eficiência (Inspire 2 infla ~5pp, alvo >=88)
+  rhr:        25, // FC repouso — sinal mais robusto do aparelho
+  deep:       10, // descontando viés +15min do Inspire 2
+  rem:        10, // REM é confundido com Light frequentemente
+  consistency:13  // cronobiologia — regularidade do horário
+};
+
+// cada função retorna 0-100
+// Alvo: 390-480min (~6h30-8h) de SONO EFETIVO, não tempo na cama.
+// 7-9h na cama com eficiência ~88% = ~6h10-7h55 efetivos.
+const scoreDuration = (min) => {
+  if (!min) return 0;
+  if (min >= 390 && min <= 480) return 100;
+  if (min >= 360 && min < 390) return 80 + (min-360)/30 * 20;
+  if (min > 480 && min <= 540) return 100 - (min-480)/60 * 15;
+  if (min >= 330 && min < 360) return 60 + (min-330)/30 * 20;
+  if (min > 540 && min <= 600) return 85 - (min-540)/60 * 20;
+  if (min < 330) return Math.max(0, min/330 * 60);
+  return Math.max(0, 65 - (min-600)/60 * 30);
+};
+
+// Inspire 2 superestima eficiência (~5pp vs PSG, specificity p/ awake = 13%).
+// Alvo ajustado: >=88 reportado (~>=83 real, que é o "good sleep" clínico).
+const scoreEfficiency = (eff) => {
+  if (!eff) return 0;
+  if (eff >= 88) return 100;
+  if (eff >= 85) return 80 + (eff-85)/3 * 20;
+  if (eff >= 82) return 60 + (eff-82)/3 * 20;
+  if (eff >= 78) return 40 + (eff-78)/4 * 20;
+  if (eff >= 68) return 20 + (eff-68)/10 * 20;
+  return Math.max(0, eff/68 * 20);
+};
+
+// Inspire 2 superestima Deep em ~15min vs PSG (≈3pp do total).
+// Alvo PSG 15-25% → alvo reportado 17-28% (desconta viés).
+const scoreDeep = (deep, total) => {
+  if (!deep || !total) return 0;
+  const pct = deep/total*100;
+  if (pct >= 17 && pct <= 28) return 100;
+  if (pct >= 14 && pct < 17) return 75 + (pct-14)/3 * 25;
+  if (pct > 28 && pct <= 33) return 100 - (pct-28)/5 * 15;
+  if (pct >= 10 && pct < 14) return 45 + (pct-10)/4 * 30;
+  if (pct > 33) return Math.max(40, 85 - (pct-33)*2);
+  return Math.max(0, pct/10 * 45);
+};
+
+// Inspire 2 superestima REM vs PSG. Alvo PSG 20-25% → reportado 22-30%.
+const scoreRem = (rem, total) => {
+  if (!rem || !total) return 0;
+  const pct = rem/total*100;
+  if (pct >= 22 && pct <= 30) return 100;
+  if (pct >= 18 && pct < 22) return 75 + (pct-18)/4 * 25;
+  if (pct > 30 && pct <= 35) return 100 - (pct-30)/5 * 15;
+  if (pct >= 13 && pct < 18) return 45 + (pct-13)/5 * 30;
+  if (pct > 35) return Math.max(40, 85 - (pct-35)*2);
+  return Math.max(0, pct/13 * 45);
+};
+
+const scoreRhr = (bpm) => {
+  if (!bpm) return 0;
+  // atletas/ótima saúde: <60. bom <65. aceitável <75.
+  if (bpm <= 55) return 100;
+  if (bpm <= 60) return 95 - (bpm-55)*1;
+  if (bpm <= 65) return 85 - (bpm-60)*2;
+  if (bpm <= 70) return 70 - (bpm-65)*3;
+  if (bpm <= 75) return 55 - (bpm-70)*4;
+  if (bpm <= 80) return 35 - (bpm-75)*3;
+  if (bpm <= 90) return Math.max(0, 20 - (bpm-80)*2);
+  return 0;
+};
+
+// consistência: desvio-padrão do horário de deitar nos últimos 7 dias
+// <30min=100, <60min=75, <90min=50, <120min=25, >=120min=0
+const scoreConsistency = (bedtimes) => {
+  if (!bedtimes || bedtimes.length < 3) return null;
+  // converter horário p/ minutos em círculo de 24h centrado
+  const mins = bedtimes.map(d => {
+    const h = d.getHours(); const m = d.getMinutes();
+    // normaliza: horários 18-23 viram 18-23, 0-5 viram 24-29 (contínuo)
+    let total = h*60 + m;
+    if (h < 12) total += 24*60;
+    return total;
+  });
+  const avg = mins.reduce((a,b)=>a+b,0)/mins.length;
+  const variance = mins.reduce((a,b)=>a+(b-avg)**2,0)/mins.length;
+  const std = Math.sqrt(variance);
+  if (std <= 20) return 100;
+  if (std <= 40) return 85;
+  if (std <= 60) return 70;
+  if (std <= 90) return 50;
+  if (std <= 120) return 30;
+  return Math.max(0, 30 - (std-120)/4);
+};
+
+/* ============================================================
+   PARSE CSV
+   ============================================================ */
+const parseRow = (r) => {
+  const num = (v) => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = parseFloat(String(v).replace(",","."));
+    return isNaN(n) ? null : n;
+  };
+  const parseISO = (s) => {
+    if (!s) return null;
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  };
+  // headers tolerantes (a planilha pode ter caps diferentes)
+  const get = (keys) => {
+    for (const k of keys){
+      for (const key of Object.keys(r)){
+        if (key.trim().toLowerCase() === k.toLowerCase()) return r[key];
+      }
+    }
+    return null;
+  };
+  return {
+    dateStr: get(["Data","data"]),
+    start: parseISO(get(["Início","Inicio","inicio"])),
+    end:   parseISO(get(["Fim","fim"])),
+    duration:  num(get(["Duração (min)","Duracao (min)","duracao"])),
+    asleep:    num(get(["Min Dormido","min dormido"])),
+    awake:     num(get(["Min Acordado","min acordado"])),
+    efficiency:num(get(["Eficiência %","Eficiencia %","eficiencia"])),
+    deep:      num(get(["Deep (min)","deep"])),
+    light:     num(get(["Light (min)","light"])),
+    rem:       num(get(["REM (min)","rem"])),
+    rhr:       num(get(["BPM Repouso","bpm repouso","rhr"])),
+  };
+};
+
+/* ============================================================
+   PROCESS: filtra soneca (duração <180min ou deep=0) → usa só sono principal
+   Agrupa por data e pega o registro de maior duração
+   ============================================================ */
+const processRows = (rows) => {
+  const byDate = new Map();
+  rows.forEach(r => {
+    if (!r.dateStr || !r.duration) return;
+    // ignora cochilos curtos (soneca)
+    const isNap = r.duration < 180 || (r.deep === 0 && r.rem === 0);
+    if (isNap) return;
+    const prev = byDate.get(r.dateStr);
+    if (!prev || r.duration > prev.duration) byDate.set(r.dateStr, r);
+  });
+  // ordena por start asc
+  return Array.from(byDate.values())
+    .filter(r => r.start)
+    .sort((a,b)=>a.start - b.start);
+};
+
+/* ============================================================
+   COMPUTE SCORE pra um registro
+   ============================================================ */
+const computeScore = (row, history) => {
+  const sD = scoreDuration(row.asleep);
+  const sE = scoreEfficiency(row.efficiency);
+  const sDp= scoreDeep(row.deep, row.asleep);
+  const sR = scoreRem(row.rem, row.asleep);
+  const sH = scoreRhr(row.rhr);
+
+  // consistência: últimos 7 deitares até esse ponto
+  const idx = history.findIndex(h => h.dateStr === row.dateStr);
+  const window = history.slice(Math.max(0, idx-6), idx+1).map(h=>h.start).filter(Boolean);
+  const sC = scoreConsistency(window);
+
+  const parts = [
+    { key:"duration", label:"Duração", v:sD, w:WEIGHTS.duration, raw: row.asleep ? `${Math.floor(row.asleep/60)}h${String(row.asleep%60).padStart(2,"0")}` : "—" },
+    { key:"efficiency", label:"Eficiência", v:sE, w:WEIGHTS.efficiency, raw: row.efficiency ? `${row.efficiency}%` : "—" },
+    { key:"deep", label:"Deep", v:sDp, w:WEIGHTS.deep, raw: row.deep!=null && row.asleep ? `${row.deep}m · ${(row.deep/row.asleep*100).toFixed(0)}%` : "—" },
+    { key:"rem", label:"REM", v:sR, w:WEIGHTS.rem, raw: row.rem!=null && row.asleep ? `${row.rem}m · ${(row.rem/row.asleep*100).toFixed(0)}%` : "—" },
+    { key:"rhr", label:"FC Repouso", v:sH, w:WEIGHTS.rhr, raw: row.rhr ? `${row.rhr} bpm` : "—" },
+    { key:"consistency", label:"Regularidade", v:sC, w:WEIGHTS.consistency, raw: sC !== null ? "7-dia" : "dados insuf." },
+  ];
+
+  // se consistência é null, redistribuir peso nos demais
+  const valid = parts.filter(p => p.v !== null && p.v !== undefined);
+  const totalW = valid.reduce((a,p)=>a+p.w,0);
+  const total = valid.reduce((a,p)=>a + p.v * (p.w/totalW), 0);
+
+  return {
+    total: Math.round(total),
+    parts
+  };
+};
+
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+const bandColor = (v) => {
+  if (v === null || v === undefined) return "var(--mute)";
+  if (v >= 85) return "var(--green)";
+  if (v >= 70) return "var(--blue)";
+  if (v >= 55) return "var(--amber)";
+  return "var(--red)";
+};
+const bandLabel = (v) => {
+  if (v >= 85) return "ÓTIMO";
+  if (v >= 70) return "BOM";
+  if (v >= 55) return "REGULAR";
+  return "ABAIXO";
+};
+
+const fmtDate = (s) => {
+  // "07/08/2024" -> "07 AGO"
+  if (!s) return "";
+  const [d,m] = s.split("/");
+  const mn = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+  return `${d} ${mn[parseInt(m,10)-1] || ""}`;
+};
+const fmtDateFull = (s) => {
+  if (!s) return "";
+  const [d,m,y] = s.split("/");
+  return `${d}/${m}/${y}`;
+};
+
+/* ============================================================
+   COMPONENTS
+   ============================================================ */
+function Ring({ value, size=220, stroke=10 }){
+  const v = Math.max(0, Math.min(100, value || 0));
+  const r = (size - stroke)/2;
+  const c = 2*Math.PI*r;
+  const dash = (v/100) * c;
+  const color = bandColor(v);
+  return (
+    <svg width={size} height={size} className="block">
+      <defs>
+        <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="1"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0.5"/>
+        </linearGradient>
+      </defs>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--line)" strokeWidth={stroke}/>
+      <circle
+        cx={size/2} cy={size/2} r={r}
+        fill="none" stroke="url(#ringGrad)" strokeWidth={stroke}
+        strokeDasharray={`${dash} ${c-dash}`}
+        strokeDashoffset={c/4}
+        strokeLinecap="butt"
+        transform={`rotate(-90 ${size/2} ${size/2})`}
+        style={{transition:"stroke-dasharray 1.2s cubic-bezier(.3,.8,.2,1)"}}
+      />
+    </svg>
+  );
+}
+
+function Bar100({ value }){
+  const v = Math.max(0, Math.min(100, value || 0));
+  return (
+    <div className="w-full h-[3px] bg-[var(--line)] relative">
+      <div style={{width:`${v}%`, background:bandColor(v), transition:"width .9s ease"}} className="h-full"></div>
+      <div className="absolute inset-0 tick opacity-30 pointer-events-none"></div>
+    </div>
+  );
+}
+
+function MetricCard({ part, index }){
+  const v = part.v;
+  return (
+    <div className={`reveal delay-${Math.min(6, index+2)} border-t hairline pt-4 pr-3`}>
+      <div className="flex items-baseline justify-between">
+        <div className="tag">{String(index+1).padStart(2,"0")} · {part.label}</div>
+        <div className="num-tab text-[11px]" style={{color:bandColor(v)}}>{bandLabel(v)}</div>
+      </div>
+      <div className="mt-3 flex items-baseline gap-3">
+        <div className="font-display num-tab text-5xl leading-none" style={{color:"var(--bone)"}}>
+          {v === null || v === undefined ? "—" : Math.round(v)}
+        </div>
+        <div className="text-[11px] text-[var(--mute)] num-tab">/100</div>
+      </div>
+      <div className="mt-3"><Bar100 value={v}/></div>
+      <div className="mt-2 flex justify-between text-[10px] text-[var(--mute)] num-tab">
+        <span>{part.raw}</span>
+        <span>peso {part.w}%</span>
+      </div>
+    </div>
+  );
+}
+
+function Header({ lastUpdate, loading }){
+  const now = new Date();
+  const fmt = now.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  return (
+    <header className="border-b hairline">
+      <div className="px-6 md:px-10 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full" style={{background:"var(--green)"}}></div>
+          <div className="tag">PROTOCOL · v1.0</div>
+        </div>
+        <div className="flex items-center gap-6 text-[10px] tracking-widest text-[var(--mute)]">
+          <span className="hidden md:inline">SYNC {loading?"…":"LIVE"}</span>
+          <span className="num-tab hidden md:inline">T+{fmt}</span>
+          <span className="num-tab">{lastUpdate || "—"}</span>
+          <span className="blink" style={{color:"var(--green)"}}>●</span>
+        </div>
+      </div>
+      <div className="overflow-hidden border-t hairline">
+        <div className="marquee-track whitespace-nowrap py-2 text-[10px] tracking-[.3em] text-[var(--mute)]">
+          {Array.from({length:2}).map((_,i)=>(
+            <span key={i}>
+              &nbsp;·&nbsp;PERFORMANCE INTEGRATIVA&nbsp;·&nbsp;SLEEP ARCHITECTURE&nbsp;·&nbsp;AUTONOMIC RECOVERY&nbsp;·&nbsp;CIRCADIAN ALIGNMENT&nbsp;·&nbsp;HRV PROXY&nbsp;·&nbsp;DEEP SLEEP CONSOLIDATION&nbsp;·&nbsp;REM MENTAL RESTORATION&nbsp;·&nbsp;DON'T DIE&nbsp;·&nbsp;
+            </span>
+          ))}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function ScoreHero({ today, yesterday }){
+  const diff = yesterday ? (today.total - yesterday.total) : 0;
+  const diffStr = diff === 0 ? "—" : (diff > 0 ? `+${diff}` : `${diff}`);
+  const diffColor = diff > 0 ? "var(--green)" : diff < 0 ? "var(--red)" : "var(--mute)";
+  return (
+    <section className="border-b hairline">
+      <div className="px-6 md:px-10 py-10 md:py-16 grid grid-cols-1 md:grid-cols-12 gap-8">
+        <div className="md:col-span-5 flex flex-col justify-between">
+          <div className="reveal delay-1">
+            <div className="tag mb-2">ÍNDICE DE PERFORMANCE · HOJE</div>
+            <h1 className="font-display text-[14vw] md:text-[10rem] leading-[.85] tracking-tight score-glow num-tab"
+                style={{color: bandColor(today.total)}}>
+              {today.total}
+            </h1>
+            <div className="flex items-center gap-4 mt-4">
+              <span className="tag" style={{color: bandColor(today.total)}}>{bandLabel(today.total)}</span>
+              <span className="text-[11px] num-tab" style={{color: diffColor}}>
+                Δ 24H {diffStr}
+              </span>
+            </div>
+          </div>
+          <div className="mt-8 reveal delay-3">
+            <div className="tag mb-2">REGISTRO</div>
+            <div className="font-display text-xl">{fmtDateFull(today.row.dateStr)}</div>
+            <div className="text-[11px] text-[var(--mute)] mt-1 num-tab">
+              {today.row.start && today.row.end
+                ? `${today.row.start.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} → ${today.row.end.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}`
+                : "—"}
+            </div>
+          </div>
+        </div>
+
+        <div className="md:col-span-7 grid grid-cols-2 gap-x-8 gap-y-2 content-start">
+          {today.parts.map((p,i)=>(<MetricCard key={p.key} part={p} index={i} />))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TrendChart({ series }){
+  // series: [{date,total}]
+  const data = series.map(s => ({
+    date: fmtDate(s.dateStr),
+    score: s.total,
+    rhr: s.rhr,
+  }));
+  return (
+    <div className="h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{top:20,right:20,left:0,bottom:0}}>
+          <defs>
+            <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#B8D97A" stopOpacity={.4}/>
+              <stop offset="100%" stopColor="#B8D97A" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke="#26251F" strokeDasharray="0" vertical={false}/>
+          <XAxis dataKey="date" stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}}
+                 interval={Math.max(0, Math.floor(data.length/8))}/>
+          <YAxis stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}} domain={[0,100]}/>
+          <Tooltip
+            contentStyle={{background:"#0E0E0D",border:"1px solid #26251F",borderRadius:0,fontFamily:"JetBrains Mono",fontSize:11}}
+            labelStyle={{color:"#78746B"}}
+            itemStyle={{color:"#F2EFE8"}}
+          />
+          <ReferenceLine y={85} stroke="#26251F" strokeDasharray="2 4" label={{value:"ÓTIMO",position:"right",fill:"#78746B",fontSize:9}}/>
+          <ReferenceLine y={70} stroke="#26251F" strokeDasharray="2 4"/>
+          <Area type="monotone" dataKey="score" stroke="#B8D97A" strokeWidth={1.5} fill="url(#scoreGrad)" />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function RhrChart({ series }){
+  const data = series.map(s => ({ date: fmtDate(s.dateStr), rhr: s.rhr }));
+  return (
+    <div className="h-48">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{top:10,right:20,left:0,bottom:0}}>
+          <CartesianGrid stroke="#26251F" strokeDasharray="0" vertical={false}/>
+          <XAxis dataKey="date" stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}}
+                 interval={Math.max(0, Math.floor(data.length/8))}/>
+          <YAxis stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}} domain={['dataMin-2','dataMax+2']}/>
+          <Tooltip contentStyle={{background:"#0E0E0D",border:"1px solid #26251F",borderRadius:0,fontFamily:"JetBrains Mono",fontSize:11}}/>
+          <Line type="monotone" dataKey="rhr" stroke="#7FA7C9" strokeWidth={1.5} dot={false}/>
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function StageStackChart({ series }){
+  const data = series.map(s => ({
+    date: fmtDate(s.dateStr),
+    deep: s.row.deep||0,
+    rem:  s.row.rem||0,
+    light:s.row.light||0,
+  }));
+  return (
+    <div className="h-48">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{top:10,right:20,left:0,bottom:0}}>
+          <CartesianGrid stroke="#26251F" strokeDasharray="0" vertical={false}/>
+          <XAxis dataKey="date" stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}}
+                 interval={Math.max(0, Math.floor(data.length/8))}/>
+          <YAxis stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}}/>
+          <Tooltip contentStyle={{background:"#0E0E0D",border:"1px solid #26251F",borderRadius:0,fontFamily:"JetBrains Mono",fontSize:11}}/>
+          <Bar dataKey="deep"  stackId="a" fill="#B8D97A" />
+          <Bar dataKey="rem"   stackId="a" fill="#7FA7C9" />
+          <Bar dataKey="light" stackId="a" fill="#3D3C35" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function KPI({ label, value, unit, sub, color }){
+  return (
+    <div className="border-t hairline pt-4 pr-3">
+      <div className="tag">{label}</div>
+      <div className="mt-2 flex items-baseline gap-2">
+        <div className="font-display num-tab text-4xl leading-none" style={{color: color||"var(--bone)"}}>{value}</div>
+        {unit && <div className="text-[10px] text-[var(--mute)] num-tab">{unit}</div>}
+      </div>
+      {sub && <div className="text-[10px] text-[var(--mute)] num-tab mt-2">{sub}</div>}
+    </div>
+  );
+}
+
+function Summary({ series }){
+  // últimas 7 e 30
+  const last = (n) => series.slice(-n);
+  const avg = (arr, k) => arr.length ? arr.reduce((a,b)=>a+(b[k]||0),0)/arr.length : 0;
+
+  const s7 = last(7);
+  const s30 = last(30);
+  const avg7 = avg(s7,"total");
+  const avg30 = avg(s30,"total");
+
+  // streak: quantos dias consecutivos >=70
+  let streak = 0;
+  for (let i=series.length-1; i>=0; i--){
+    if (series[i].total >= 70) streak++;
+    else break;
+  }
+
+  // best day
+  const best = series.slice().sort((a,b)=>b.total-a.total)[0];
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8">
+      <KPI label="Média 7 DIAS" value={avg7.toFixed(0)} unit="/100" color={bandColor(avg7)}
+           sub={`${s7.length} registros`} />
+      <KPI label="Média 30 DIAS" value={avg30.toFixed(0)} unit="/100" color={bandColor(avg30)}
+           sub={`${s30.length} registros`} />
+      <KPI label="Streak ≥70" value={streak} unit="dias" color="var(--green)"
+           sub="sequência atual" />
+      <KPI label="PR · melhor" value={best?.total || 0} unit="/100" color="var(--green)"
+           sub={best ? fmtDateFull(best.dateStr) : "—"} />
+    </div>
+  );
+}
+
+function Distribution({ series }){
+  const buckets = [
+    {label:"85–100 ÓTIMO", min:85, color:"var(--green)"},
+    {label:"70–84  BOM",   min:70, color:"var(--blue)"},
+    {label:"55–69  REGULAR", min:55, color:"var(--amber)"},
+    {label:"0–54   ABAIXO", min:0,  color:"var(--red)"},
+  ];
+  const counts = buckets.map(b => {
+    const c = series.filter(s => {
+      if (b.min === 85) return s.total >= 85;
+      if (b.min === 70) return s.total >= 70 && s.total < 85;
+      if (b.min === 55) return s.total >= 55 && s.total < 70;
+      return s.total < 55;
+    }).length;
+    return { ...b, count: c, pct: series.length ? c/series.length*100 : 0 };
+  });
+  return (
+    <div className="space-y-3">
+      {counts.map((b,i)=>(
+        <div key={i}>
+          <div className="flex justify-between text-[10px] tracking-widest num-tab mb-1">
+            <span style={{color:b.color}}>{b.label}</span>
+            <span className="text-[var(--mute)]">{b.count}  ·  {b.pct.toFixed(0)}%</span>
+          </div>
+          <div className="h-[3px] bg-[var(--line)]">
+            <div style={{width:`${b.pct}%`, background:b.color, transition:"width .9s ease"}} className="h-full"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Log({ series }){
+  const rows = series.slice(-14).reverse();
+  return (
+    <div className="border-t hairline">
+      <table className="w-full text-[11px] num-tab">
+        <thead>
+          <tr className="text-[var(--mute)] tag">
+            <th className="text-left py-3 pr-4">Data</th>
+            <th className="text-left py-3 pr-4 hidden md:table-cell">Dormir</th>
+            <th className="text-right py-3 pr-4">Dur</th>
+            <th className="text-right py-3 pr-4">Ef%</th>
+            <th className="text-right py-3 pr-4 hidden md:table-cell">Deep</th>
+            <th className="text-right py-3 pr-4 hidden md:table-cell">REM</th>
+            <th className="text-right py-3 pr-4">FC</th>
+            <th className="text-right py-3">Score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((s,i)=>(
+            <tr key={i} className="border-t hairline">
+              <td className="py-3 pr-4">{fmtDateFull(s.dateStr)}</td>
+              <td className="py-3 pr-4 hidden md:table-cell text-[var(--mute)]">
+                {s.start ? s.start.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) : "—"}
+              </td>
+              <td className="text-right py-3 pr-4">{s.row.asleep ? `${Math.floor(s.row.asleep/60)}h${String(s.row.asleep%60).padStart(2,"0")}` : "—"}</td>
+              <td className="text-right py-3 pr-4">{s.row.efficiency ?? "—"}</td>
+              <td className="text-right py-3 pr-4 hidden md:table-cell">{s.row.deep ?? "—"}</td>
+              <td className="text-right py-3 pr-4 hidden md:table-cell">{s.row.rem ?? "—"}</td>
+              <td className="text-right py-3 pr-4">{s.row.rhr ?? "—"}</td>
+              <td className="text-right py-3 font-display text-lg" style={{color: bandColor(s.total)}}>{s.total}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Footer({ lastUpdate }){
+  return (
+    <footer className="border-t hairline mt-16">
+      <div className="px-6 md:px-10 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 text-[10px] text-[var(--mute)] tracking-widest">
+        <div>
+          <div className="tag mb-2" style={{color:"var(--bone)"}}>MÉTODO</div>
+          <p className="leading-relaxed">
+            Score composto 0–100 ponderando 6 vetores de performance.
+            Pesos e thresholds recalibrados com base na validação
+            do Fitbit Inspire 2 vs polissonografia:
+            menos peso em Deep/REM (specificity ~50-59%),
+            mais peso em FC Repouso e Duração (medição confiável).
+            Soneca &lt; 180min é descartada.
+          </p>
+        </div>
+        <div>
+          <div className="tag mb-2" style={{color:"var(--bone)"}}>PESOS · CALIBRADO P/ INSPIRE 2</div>
+          <ul className="space-y-1 num-tab">
+            <li>FC REPOUSO — 25%</li>
+            <li>DURAÇÃO — 22%</li>
+            <li>EFICIÊNCIA — 20%</li>
+            <li>REGULARIDADE — 13%</li>
+            <li>DEEP — 10%</li>
+            <li>REM — 10%</li>
+          </ul>
+        </div>
+        <div>
+          <div className="tag mb-2" style={{color:"var(--bone)"}}>FONTE</div>
+          <p className="leading-relaxed">
+            Leitura direta de Google Sheets via CSV export.
+            Refresh automático a cada 5 min.
+            Última sincronização: <span className="num-tab" style={{color:"var(--bone)"}}>{lastUpdate || "—"}</span>
+          </p>
+        </div>
+      </div>
+      <div className="px-6 md:px-10 py-4 border-t hairline flex items-center justify-between text-[10px] tracking-widest text-[var(--mute)]">
+        <span>PROTOCOL · CAIO · {new Date().getFullYear()}</span>
+        <span>DON'T DIE.</span>
+      </div>
+    </footer>
+  );
+}
+
+/* ============================================================
+   APP
+   ============================================================ */
+function App(){
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const [range, setRange] = useState("30"); // 30, 90, all
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(CSV_URL + "&_t=" + Date.now());
+      if (!res.ok) throw new Error("Falha ao buscar CSV ("+res.status+")");
+      const text = await res.text();
+      const parsed = Papa.parse(text, { header:true, skipEmptyLines:true });
+      const mapped = parsed.data.map(parseRow);
+      const processed = processRows(mapped);
+      setRows(processed);
+      setLastUpdate(new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}));
+      setError(null);
+    } catch(e){
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(()=>{
+    fetchData();
+    const id = setInterval(fetchData, REFRESH_MS);
+    return ()=>clearInterval(id);
+  },[]);
+
+  const scored = useMemo(()=>{
+    return rows.map(r => {
+      const s = computeScore(r, rows);
+      return { ...s, row: r, dateStr: r.dateStr, start: r.start, rhr: r.rhr };
+    });
+  },[rows]);
+
+  const filtered = useMemo(()=>{
+    if (range === "all") return scored;
+    const n = parseInt(range,10);
+    return scored.slice(-n);
+  },[scored, range]);
+
+  const today = scored[scored.length-1];
+  const yesterday = scored[scored.length-2];
+
+  if (loading && !rows.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="tag mb-2">PROTOCOL</div>
+          <div className="font-display text-4xl">Sincronizando<span className="blink">_</span></div>
+          <div className="text-[10px] text-[var(--mute)] mt-2 tracking-widest">LENDO GOOGLE SHEETS</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-md">
+          <div className="tag mb-2" style={{color:"var(--red)"}}>ERRO DE SINCRONIZAÇÃO</div>
+          <div className="font-display text-3xl mb-4">Não consegui ler a planilha.</div>
+          <p className="text-[12px] text-[var(--mute)] leading-relaxed">
+            Verifica se a planilha está com acesso "Qualquer pessoa com o link → Leitor".
+            Detalhe técnico: {error}
+          </p>
+          <button onClick={fetchData} className="mt-6 border hairline px-4 py-2 tag hover:bg-[var(--char)]">
+            TENTAR NOVAMENTE
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!today) return null;
+
+  return (
+    <div className="grain min-h-screen">
+      <Header lastUpdate={lastUpdate} loading={loading}/>
+      <ScoreHero today={today} yesterday={yesterday}/>
+
+      <section className="px-6 md:px-10 py-10 border-b hairline">
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <div className="tag mb-1">SÉRIE TEMPORAL · ÍNDICE</div>
+            <h2 className="font-display text-3xl md:text-4xl">Trajetória</h2>
+          </div>
+          <div className="flex gap-2">
+            {["30","90","all"].map(r=>(
+              <button key={r} onClick={()=>setRange(r)}
+                className={`tag border hairline px-3 py-1 ${range===r?"bg-[var(--bone)] text-[var(--paper)]":"text-[var(--mute)] hover:text-[var(--bone)]"}`}>
+                {r==="all"?"TUDO":r+"D"}
+              </button>
+            ))}
+          </div>
+        </div>
+        <TrendChart series={filtered}/>
+      </section>
+
+      <section className="px-6 md:px-10 py-10 border-b hairline grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div>
+          <div className="tag mb-1">ARQUITETURA DO SONO</div>
+          <h3 className="font-display text-2xl mb-4">Deep · REM · Light</h3>
+          <StageStackChart series={filtered}/>
+          <div className="mt-3 flex gap-4 text-[10px] tracking-widest">
+            <span className="flex items-center gap-2"><span className="w-3 h-[2px]" style={{background:"#B8D97A"}}></span>DEEP</span>
+            <span className="flex items-center gap-2"><span className="w-3 h-[2px]" style={{background:"#7FA7C9"}}></span>REM</span>
+            <span className="flex items-center gap-2"><span className="w-3 h-[2px]" style={{background:"#3D3C35"}}></span>LIGHT</span>
+          </div>
+        </div>
+        <div>
+          <div className="tag mb-1">RECUPERAÇÃO AUTONÔMICA</div>
+          <h3 className="font-display text-2xl mb-4">FC Repouso</h3>
+          <RhrChart series={filtered}/>
+          <p className="text-[11px] text-[var(--mute)] mt-3 leading-relaxed">
+            Frequência cardíaca de repouso é proxy de recuperação do sistema nervoso autônomo.
+            Tendência descendente indica adaptação + condicionamento.
+          </p>
+        </div>
+      </section>
+
+      <section className="px-6 md:px-10 py-10 border-b hairline">
+        <div className="tag mb-4">RESUMO</div>
+        <Summary series={filtered}/>
+      </section>
+
+      <section className="px-6 md:px-10 py-10 border-b hairline grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div>
+          <div className="tag mb-1">DISTRIBUIÇÃO</div>
+          <h3 className="font-display text-2xl mb-6">Bandas de performance · {filtered.length} dias</h3>
+          <Distribution series={filtered}/>
+        </div>
+        <div>
+          <div className="tag mb-1">ÚLTIMOS 14 DIAS</div>
+          <h3 className="font-display text-2xl mb-2">Log</h3>
+          <Log series={filtered}/>
+        </div>
+      </section>
+
+      <Footer lastUpdate={lastUpdate}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
