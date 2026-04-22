@@ -6,18 +6,11 @@
 <title>PROTOCOL · Performance Integrativa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin></script>
-<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js" crossorigin></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" crossorigin></script>
-<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js" crossorigin></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700;9..144,900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
   :root{
     --bone:#F2EFE8;
-    --ink:#0A0A0A;
     --paper:#0E0E0D;
     --char:#161614;
     --line:#26251F;
@@ -27,856 +20,751 @@
     --red:#CF5D4A;
     --blue:#7FA7C9;
   }
-  html,body{background:var(--paper);color:var(--bone);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--bone);min-height:100vh}
   body{
     font-family:'JetBrains Mono', ui-monospace, monospace;
-    font-feature-settings:"ss01","ss02","cv01","cv02";
+    font-size:13px;
+    line-height:1.5;
     -webkit-font-smoothing:antialiased;
   }
-  .font-display{font-family:'Fraunces', Georgia, serif; font-variation-settings:"opsz" 144;}
-  .font-mono{font-family:'JetBrains Mono', ui-monospace, monospace;}
-  .grain{
-    background-image:
-      radial-gradient(rgba(255,255,255,.025) 1px, transparent 1px);
-    background-size: 3px 3px;
-  }
-  .hairline{border-color:var(--line);}
-  .tick{
-    background-image:linear-gradient(to right, var(--line) 1px, transparent 1px);
-    background-size: 8px 100%;
-  }
-  .num-tab{font-variant-numeric:tabular-nums;}
-  .dot-bg{
-    background-image: radial-gradient(var(--line) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-  .score-glow{
-    text-shadow: 0 0 80px rgba(184,217,122,.15);
-  }
-  .marquee-track{
-    animation: marquee 60s linear infinite;
-  }
-  @keyframes marquee{
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
-  }
-  .blink{animation: blink 1.4s steps(2,end) infinite;}
-  @keyframes blink{ 50%{opacity:0;} }
-  .reveal{ opacity:0; transform:translateY(8px); animation: reveal .7s ease forwards;}
-  @keyframes reveal{ to{opacity:1; transform:translateY(0);} }
-  .delay-1{animation-delay:.05s} .delay-2{animation-delay:.12s} .delay-3{animation-delay:.2s}
-  .delay-4{animation-delay:.3s} .delay-5{animation-delay:.42s} .delay-6{animation-delay:.55s}
-
-  /* custom scrollbar */
+  .display{font-family:'Fraunces', Georgia, serif; font-variation-settings:"opsz" 144;}
+  .num{font-variant-numeric:tabular-nums}
+  .tag{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--mute)}
+  .hairline{border-color:var(--line)}
+  .grain{background-image:radial-gradient(rgba(255,255,255,.025) 1px, transparent 1px);background-size:3px 3px}
+  .glow{text-shadow:0 0 80px rgba(184,217,122,.15)}
+  .blink{animation:blink 1.4s steps(2,end) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .reveal{opacity:0;transform:translateY(8px);animation:reveal .7s ease forwards}
+  @keyframes reveal{to{opacity:1;transform:translateY(0)}}
+  .d1{animation-delay:.05s}.d2{animation-delay:.12s}.d3{animation-delay:.2s}
+  .d4{animation-delay:.3s}.d5{animation-delay:.42s}.d6{animation-delay:.55s}
   ::-webkit-scrollbar{width:8px;height:8px}
   ::-webkit-scrollbar-track{background:var(--paper)}
-  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:0}
+  ::-webkit-scrollbar-thumb{background:var(--line)}
 
-  .tag{
-    font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--mute);
-  }
+  .marquee{overflow:hidden;border-top:1px solid var(--line)}
+  .marquee-track{display:inline-block;white-space:nowrap;padding:8px 0;font-size:10px;letter-spacing:.3em;color:var(--mute);animation:marquee 60s linear infinite}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  header{border-bottom:1px solid var(--line)}
+  .head-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px}
+  .dot{width:8px;height:8px;border-radius:999px;background:var(--green)}
+  .hero{padding:48px 24px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr;gap:32px}
+  @media(min-width:768px){.hero{grid-template-columns:5fr 7fr;padding:72px 40px;gap:48px}}
+  .hero-score{font-size:clamp(72px,14vw,160px);line-height:.85;letter-spacing:-.03em}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px 32px;align-content:start}
+  .metric{border-top:1px solid var(--line);padding:16px 12px 0 0}
+  .metric-val{font-size:44px;line-height:1}
+  .bar{width:100%;height:3px;background:var(--line);position:relative;margin-top:12px}
+  .bar>div{height:100%;transition:width .9s ease}
+  .bar-tick{position:absolute;inset:0;background-image:linear-gradient(to right, var(--line) 1px, transparent 1px);background-size:8px 100%;opacity:.3;pointer-events:none}
+
+  section{padding:40px 24px;border-bottom:1px solid var(--line)}
+  @media(min-width:768px){section{padding:48px 40px}}
+  .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+  .h2{font-size:28px;line-height:1.1}
+  @media(min-width:768px){.h2{font-size:36px}}
+  .h3{font-size:22px;line-height:1.1;margin-bottom:16px}
+  .range-btns{display:flex;gap:8px}
+  .range-btn{border:1px solid var(--line);padding:4px 12px;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--mute);background:transparent;cursor:pointer;font-family:inherit}
+  .range-btn:hover{color:var(--bone)}
+  .range-btn.on{background:var(--bone);color:var(--paper)}
+
+  .two-col{display:grid;grid-template-columns:1fr;gap:40px}
+  @media(min-width:768px){.two-col{grid-template-columns:1fr 1fr}}
+
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}
+  @media(min-width:768px){.kpis{grid-template-columns:repeat(4,1fr)}}
+  .kpi{border-top:1px solid var(--line);padding:16px 12px 0 0}
+  .kpi-val{font-size:36px;line-height:1}
+
+  table{width:100%;font-size:11px;border-collapse:collapse}
+  th{text-align:left;padding:12px 16px 12px 0;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--mute);font-weight:400}
+  td{padding:12px 16px 12px 0;border-top:1px solid var(--line)}
+  .text-right{text-align:right}
+  .hide-sm{display:none}
+  @media(min-width:768px){.hide-sm{display:table-cell}}
+
+  footer{border-top:1px solid var(--line);margin-top:64px}
+  .foot-grid{padding:32px 24px;display:grid;grid-template-columns:1fr;gap:32px;font-size:10px;color:var(--mute);letter-spacing:.1em}
+  @media(min-width:768px){.foot-grid{grid-template-columns:repeat(3,1fr);padding:32px 40px}}
+  .foot-bottom{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:10px;letter-spacing:.22em;color:var(--mute)}
+  @media(min-width:768px){.foot-bottom{padding:16px 40px}}
+
+  .chart{width:100%;height:256px;position:relative}
+  .chart-small{height:192px}
+  svg.ch{width:100%;height:100%;display:block}
+
+  button.retry{background:transparent;border:1px solid var(--line);color:var(--bone);padding:8px 16px;font-family:inherit;font-size:10px;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;margin-top:24px}
+  button.retry:hover{background:var(--char)}
 </style>
 </head>
-<body class="min-h-screen">
+<body>
+
 <div id="root">
-  <div id="boot-fallback" style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;color:#F2EFE8;padding:24px;text-align:center">
+  <div id="boot" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center">
     <div>
-      <div style="font-size:10px;letter-spacing:.3em;color:#78746B;margin-bottom:8px">PROTOCOL · BOOT</div>
-      <div id="boot-msg" style="font-size:20px">Carregando scripts<span style="animation:blink 1.4s steps(2,end) infinite">_</span></div>
-      <div id="boot-hint" style="font-size:11px;color:#78746B;margin-top:16px;max-width:420px;line-height:1.6"></div>
+      <div class="tag" style="margin-bottom:8px">PROTOCOL · BOOT</div>
+      <div id="boot-msg" class="display" style="font-size:24px">Carregando<span class="blink">_</span></div>
+      <div id="boot-hint" style="font-size:11px;color:var(--mute);margin-top:16px;max-width:420px;line-height:1.6"></div>
     </div>
   </div>
 </div>
+
 <script>
-  // Se em 8s nada renderizou substituindo o fallback, provável CDN bloqueada
+  window.__bootOk = false;
   setTimeout(function(){
-    var el = document.getElementById("boot-fallback");
-    if (el) {
-      document.getElementById("boot-msg").textContent = "Scripts não carregaram";
-      document.getElementById("boot-hint").innerHTML =
-        "Se você usa <b>Brave</b>, clica no leão 🦁 na barra de endereço e desliga os Shields pra este site.<br><br>" +
-        "Se usa uBlock/AdBlock, desativa pra <b>caiocarniato.github.io</b>.<br><br>" +
-        "Ou abre em outro navegador (Chrome, Edge, Firefox) pra testar.";
-    }
-  }, 8000);
+    if (window.__bootOk) return;
+    var msg = document.getElementById("boot-msg");
+    var hint = document.getElementById("boot-hint");
+    if (msg) msg.textContent = "Bibliotecas não carregaram";
+    if (hint) hint.innerHTML =
+      "Sua rede ou navegador tá bloqueando scripts de <b>cdn.jsdelivr.net</b>.<br><br>" +
+      "Teste: abra <a href='https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js' style='color:#B8D97A' target='_blank'>este link</a>. " +
+      "Se não abrir, o problema é bloqueio de DNS/rede/antivírus.<br><br>" +
+      "Também testa no 4G do celular ou em outra conexão.";
+  }, 10000);
 </script>
 
-<script type="text/babel" data-presets="react">
-const { useState, useEffect, useMemo, useRef } = React;
-const {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  AreaChart, Area, BarChart, Bar, ReferenceLine, CartesianGrid
-} = Recharts;
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-/* ============================================================
-   CONFIG — trocar só se mudar a planilha
-   ============================================================ */
-const SHEET_ID  = "1hPbBeSYai8n_GpzLWLCAb1ny-4shnWlxeS4BAVdMFEc";
-const SHEET_GID = "258378049";
-const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${SHEET_GID}`;
-const REFRESH_MS = 5 * 60 * 1000; // refetch a cada 5 min
+<script>
+if (typeof React !== "undefined" && typeof ReactDOM !== "undefined") window.__bootOk = true;
+</script>
 
-/* ============================================================
-   SCORE 0–100 · MEDICINA INTEGRATIVA
-   Pesos baseados em literatura de sleep medicine + HRV/RHR research
-   ============================================================ */
-// Pesos calibrados p/ Fitbit Inspire 2 (validado vs PSG)
-// Tiramos peso de Deep/REM (specificity baixa, ~50-59%) e
-// jogamos em Duração/RHR/Regularidade (medição confiável).
-const WEIGHTS = {
-  duration:   22, // sono efetivo (alvo 6h30-8h real)
-  efficiency: 20, // % eficiência (Inspire 2 infla ~5pp, alvo >=88)
-  rhr:        25, // FC repouso — sinal mais robusto do aparelho
-  deep:       10, // descontando viés +15min do Inspire 2
-  rem:        10, // REM é confundido com Light frequentemente
-  consistency:13  // cronobiologia — regularidade do horário
-};
-
-// cada função retorna 0-100
-// Alvo: 390-480min (~6h30-8h) de SONO EFETIVO, não tempo na cama.
-// 7-9h na cama com eficiência ~88% = ~6h10-7h55 efetivos.
-const scoreDuration = (min) => {
-  if (!min) return 0;
-  if (min >= 390 && min <= 480) return 100;
-  if (min >= 360 && min < 390) return 80 + (min-360)/30 * 20;
-  if (min > 480 && min <= 540) return 100 - (min-480)/60 * 15;
-  if (min >= 330 && min < 360) return 60 + (min-330)/30 * 20;
-  if (min > 540 && min <= 600) return 85 - (min-540)/60 * 20;
-  if (min < 330) return Math.max(0, min/330 * 60);
-  return Math.max(0, 65 - (min-600)/60 * 30);
-};
-
-// Inspire 2 superestima eficiência (~5pp vs PSG, specificity p/ awake = 13%).
-// Alvo ajustado: >=88 reportado (~>=83 real, que é o "good sleep" clínico).
-const scoreEfficiency = (eff) => {
-  if (!eff) return 0;
-  if (eff >= 88) return 100;
-  if (eff >= 85) return 80 + (eff-85)/3 * 20;
-  if (eff >= 82) return 60 + (eff-82)/3 * 20;
-  if (eff >= 78) return 40 + (eff-78)/4 * 20;
-  if (eff >= 68) return 20 + (eff-68)/10 * 20;
-  return Math.max(0, eff/68 * 20);
-};
-
-// Inspire 2 superestima Deep em ~15min vs PSG (≈3pp do total).
-// Alvo PSG 15-25% → alvo reportado 17-28% (desconta viés).
-const scoreDeep = (deep, total) => {
-  if (!deep || !total) return 0;
-  const pct = deep/total*100;
-  if (pct >= 17 && pct <= 28) return 100;
-  if (pct >= 14 && pct < 17) return 75 + (pct-14)/3 * 25;
-  if (pct > 28 && pct <= 33) return 100 - (pct-28)/5 * 15;
-  if (pct >= 10 && pct < 14) return 45 + (pct-10)/4 * 30;
-  if (pct > 33) return Math.max(40, 85 - (pct-33)*2);
-  return Math.max(0, pct/10 * 45);
-};
-
-// Inspire 2 superestima REM vs PSG. Alvo PSG 20-25% → reportado 22-30%.
-const scoreRem = (rem, total) => {
-  if (!rem || !total) return 0;
-  const pct = rem/total*100;
-  if (pct >= 22 && pct <= 30) return 100;
-  if (pct >= 18 && pct < 22) return 75 + (pct-18)/4 * 25;
-  if (pct > 30 && pct <= 35) return 100 - (pct-30)/5 * 15;
-  if (pct >= 13 && pct < 18) return 45 + (pct-13)/5 * 30;
-  if (pct > 35) return Math.max(40, 85 - (pct-35)*2);
-  return Math.max(0, pct/13 * 45);
-};
-
-const scoreRhr = (bpm) => {
-  if (!bpm) return 0;
-  // atletas/ótima saúde: <60. bom <65. aceitável <75.
-  if (bpm <= 55) return 100;
-  if (bpm <= 60) return 95 - (bpm-55)*1;
-  if (bpm <= 65) return 85 - (bpm-60)*2;
-  if (bpm <= 70) return 70 - (bpm-65)*3;
-  if (bpm <= 75) return 55 - (bpm-70)*4;
-  if (bpm <= 80) return 35 - (bpm-75)*3;
-  if (bpm <= 90) return Math.max(0, 20 - (bpm-80)*2);
-  return 0;
-};
-
-// consistência: desvio-padrão do horário de deitar nos últimos 7 dias
-// <30min=100, <60min=75, <90min=50, <120min=25, >=120min=0
-const scoreConsistency = (bedtimes) => {
-  if (!bedtimes || bedtimes.length < 3) return null;
-  // converter horário p/ minutos em círculo de 24h centrado
-  const mins = bedtimes.map(d => {
-    const h = d.getHours(); const m = d.getMinutes();
-    // normaliza: horários 18-23 viram 18-23, 0-5 viram 24-29 (contínuo)
-    let total = h*60 + m;
-    if (h < 12) total += 24*60;
-    return total;
-  });
-  const avg = mins.reduce((a,b)=>a+b,0)/mins.length;
-  const variance = mins.reduce((a,b)=>a+(b-avg)**2,0)/mins.length;
-  const std = Math.sqrt(variance);
-  if (std <= 20) return 100;
-  if (std <= 40) return 85;
-  if (std <= 60) return 70;
-  if (std <= 90) return 50;
-  if (std <= 120) return 30;
-  return Math.max(0, 30 - (std-120)/4);
-};
-
-/* ============================================================
-   PARSE CSV
-   ============================================================ */
-const parseRow = (r) => {
-  const num = (v) => {
-    if (v === null || v === undefined || v === "") return null;
-    const n = parseFloat(String(v).replace(",","."));
-    return isNaN(n) ? null : n;
-  };
-  const parseISO = (s) => {
-    if (!s) return null;
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d;
-  };
-  // headers tolerantes (a planilha pode ter caps diferentes)
-  const get = (keys) => {
-    for (const k of keys){
-      for (const key of Object.keys(r)){
-        if (key.trim().toLowerCase() === k.toLowerCase()) return r[key];
-      }
-    }
-    return null;
-  };
-  return {
-    dateStr: get(["Data","data"]),
-    start: parseISO(get(["Início","Inicio","inicio"])),
-    end:   parseISO(get(["Fim","fim"])),
-    duration:  num(get(["Duração (min)","Duracao (min)","duracao"])),
-    asleep:    num(get(["Min Dormido","min dormido"])),
-    awake:     num(get(["Min Acordado","min acordado"])),
-    efficiency:num(get(["Eficiência %","Eficiencia %","eficiencia"])),
-    deep:      num(get(["Deep (min)","deep"])),
-    light:     num(get(["Light (min)","light"])),
-    rem:       num(get(["REM (min)","rem"])),
-    rhr:       num(get(["BPM Repouso","bpm repouso","rhr"])),
-  };
-};
-
-/* ============================================================
-   PROCESS: filtra soneca (duração <180min ou deep=0) → usa só sono principal
-   Agrupa por data e pega o registro de maior duração
-   ============================================================ */
-const processRows = (rows) => {
-  const byDate = new Map();
-  rows.forEach(r => {
-    if (!r.dateStr || !r.duration) return;
-    // ignora cochilos curtos (soneca)
-    const isNap = r.duration < 180 || (r.deep === 0 && r.rem === 0);
-    if (isNap) return;
-    const prev = byDate.get(r.dateStr);
-    if (!prev || r.duration > prev.duration) byDate.set(r.dateStr, r);
-  });
-  // ordena por start asc
-  return Array.from(byDate.values())
-    .filter(r => r.start)
-    .sort((a,b)=>a.start - b.start);
-};
-
-/* ============================================================
-   COMPUTE SCORE pra um registro
-   ============================================================ */
-const computeScore = (row, history) => {
-  const sD = scoreDuration(row.asleep);
-  const sE = scoreEfficiency(row.efficiency);
-  const sDp= scoreDeep(row.deep, row.asleep);
-  const sR = scoreRem(row.rem, row.asleep);
-  const sH = scoreRhr(row.rhr);
-
-  // consistência: últimos 7 deitares até esse ponto
-  const idx = history.findIndex(h => h.dateStr === row.dateStr);
-  const window = history.slice(Math.max(0, idx-6), idx+1).map(h=>h.start).filter(Boolean);
-  const sC = scoreConsistency(window);
-
-  const parts = [
-    { key:"duration", label:"Duração", v:sD, w:WEIGHTS.duration, raw: row.asleep ? `${Math.floor(row.asleep/60)}h${String(row.asleep%60).padStart(2,"0")}` : "—" },
-    { key:"efficiency", label:"Eficiência", v:sE, w:WEIGHTS.efficiency, raw: row.efficiency ? `${row.efficiency}%` : "—" },
-    { key:"deep", label:"Deep", v:sDp, w:WEIGHTS.deep, raw: row.deep!=null && row.asleep ? `${row.deep}m · ${(row.deep/row.asleep*100).toFixed(0)}%` : "—" },
-    { key:"rem", label:"REM", v:sR, w:WEIGHTS.rem, raw: row.rem!=null && row.asleep ? `${row.rem}m · ${(row.rem/row.asleep*100).toFixed(0)}%` : "—" },
-    { key:"rhr", label:"FC Repouso", v:sH, w:WEIGHTS.rhr, raw: row.rhr ? `${row.rhr} bpm` : "—" },
-    { key:"consistency", label:"Regularidade", v:sC, w:WEIGHTS.consistency, raw: sC !== null ? "7-dia" : "dados insuf." },
-  ];
-
-  // se consistência é null, redistribuir peso nos demais
-  const valid = parts.filter(p => p.v !== null && p.v !== undefined);
-  const totalW = valid.reduce((a,p)=>a+p.w,0);
-  const total = valid.reduce((a,p)=>a + p.v * (p.w/totalW), 0);
-
-  return {
-    total: Math.round(total),
-    parts
-  };
-};
-
-/* ============================================================
-   UI HELPERS
-   ============================================================ */
-const bandColor = (v) => {
-  if (v === null || v === undefined) return "var(--mute)";
-  if (v >= 85) return "var(--green)";
-  if (v >= 70) return "var(--blue)";
-  if (v >= 55) return "var(--amber)";
-  return "var(--red)";
-};
-const bandLabel = (v) => {
-  if (v >= 85) return "ÓTIMO";
-  if (v >= 70) return "BOM";
-  if (v >= 55) return "REGULAR";
-  return "ABAIXO";
-};
-
-const fmtDate = (s) => {
-  // "07/08/2024" -> "07 AGO"
-  if (!s) return "";
-  const [d,m] = s.split("/");
-  const mn = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
-  return `${d} ${mn[parseInt(m,10)-1] || ""}`;
-};
-const fmtDateFull = (s) => {
-  if (!s) return "";
-  const [d,m,y] = s.split("/");
-  return `${d}/${m}/${y}`;
-};
-
-/* ============================================================
-   COMPONENTS
-   ============================================================ */
-function Ring({ value, size=220, stroke=10 }){
-  const v = Math.max(0, Math.min(100, value || 0));
-  const r = (size - stroke)/2;
-  const c = 2*Math.PI*r;
-  const dash = (v/100) * c;
-  const color = bandColor(v);
-  return (
-    <svg width={size} height={size} className="block">
-      <defs>
-        <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="1"/>
-          <stop offset="100%" stopColor={color} stopOpacity="0.5"/>
-        </linearGradient>
-      </defs>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--line)" strokeWidth={stroke}/>
-      <circle
-        cx={size/2} cy={size/2} r={r}
-        fill="none" stroke="url(#ringGrad)" strokeWidth={stroke}
-        strokeDasharray={`${dash} ${c-dash}`}
-        strokeDashoffset={c/4}
-        strokeLinecap="butt"
-        transform={`rotate(-90 ${size/2} ${size/2})`}
-        style={{transition:"stroke-dasharray 1.2s cubic-bezier(.3,.8,.2,1)"}}
-      />
-    </svg>
-  );
-}
-
-function Bar100({ value }){
-  const v = Math.max(0, Math.min(100, value || 0));
-  return (
-    <div className="w-full h-[3px] bg-[var(--line)] relative">
-      <div style={{width:`${v}%`, background:bandColor(v), transition:"width .9s ease"}} className="h-full"></div>
-      <div className="absolute inset-0 tick opacity-30 pointer-events-none"></div>
-    </div>
-  );
-}
-
-function MetricCard({ part, index }){
-  const v = part.v;
-  return (
-    <div className={`reveal delay-${Math.min(6, index+2)} border-t hairline pt-4 pr-3`}>
-      <div className="flex items-baseline justify-between">
-        <div className="tag">{String(index+1).padStart(2,"0")} · {part.label}</div>
-        <div className="num-tab text-[11px]" style={{color:bandColor(v)}}>{bandLabel(v)}</div>
-      </div>
-      <div className="mt-3 flex items-baseline gap-3">
-        <div className="font-display num-tab text-5xl leading-none" style={{color:"var(--bone)"}}>
-          {v === null || v === undefined ? "—" : Math.round(v)}
-        </div>
-        <div className="text-[11px] text-[var(--mute)] num-tab">/100</div>
-      </div>
-      <div className="mt-3"><Bar100 value={v}/></div>
-      <div className="mt-2 flex justify-between text-[10px] text-[var(--mute)] num-tab">
-        <span>{part.raw}</span>
-        <span>peso {part.w}%</span>
-      </div>
-    </div>
-  );
-}
-
-function Header({ lastUpdate, loading }){
-  const now = new Date();
-  const fmt = now.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  return (
-    <header className="border-b hairline">
-      <div className="px-6 md:px-10 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full" style={{background:"var(--green)"}}></div>
-          <div className="tag">PROTOCOL · v1.0</div>
-        </div>
-        <div className="flex items-center gap-6 text-[10px] tracking-widest text-[var(--mute)]">
-          <span className="hidden md:inline">SYNC {loading?"…":"LIVE"}</span>
-          <span className="num-tab hidden md:inline">T+{fmt}</span>
-          <span className="num-tab">{lastUpdate || "—"}</span>
-          <span className="blink" style={{color:"var(--green)"}}>●</span>
-        </div>
-      </div>
-      <div className="overflow-hidden border-t hairline">
-        <div className="marquee-track whitespace-nowrap py-2 text-[10px] tracking-[.3em] text-[var(--mute)]">
-          {Array.from({length:2}).map((_,i)=>(
-            <span key={i}>
-              &nbsp;·&nbsp;PERFORMANCE INTEGRATIVA&nbsp;·&nbsp;SLEEP ARCHITECTURE&nbsp;·&nbsp;AUTONOMIC RECOVERY&nbsp;·&nbsp;CIRCADIAN ALIGNMENT&nbsp;·&nbsp;HRV PROXY&nbsp;·&nbsp;DEEP SLEEP CONSOLIDATION&nbsp;·&nbsp;REM MENTAL RESTORATION&nbsp;·&nbsp;DON'T DIE&nbsp;·&nbsp;
-            </span>
-          ))}
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function ScoreHero({ today, yesterday }){
-  const diff = yesterday ? (today.total - yesterday.total) : 0;
-  const diffStr = diff === 0 ? "—" : (diff > 0 ? `+${diff}` : `${diff}`);
-  const diffColor = diff > 0 ? "var(--green)" : diff < 0 ? "var(--red)" : "var(--mute)";
-  return (
-    <section className="border-b hairline">
-      <div className="px-6 md:px-10 py-10 md:py-16 grid grid-cols-1 md:grid-cols-12 gap-8">
-        <div className="md:col-span-5 flex flex-col justify-between">
-          <div className="reveal delay-1">
-            <div className="tag mb-2">ÍNDICE DE PERFORMANCE · HOJE</div>
-            <h1 className="font-display text-[14vw] md:text-[10rem] leading-[.85] tracking-tight score-glow num-tab"
-                style={{color: bandColor(today.total)}}>
-              {today.total}
-            </h1>
-            <div className="flex items-center gap-4 mt-4">
-              <span className="tag" style={{color: bandColor(today.total)}}>{bandLabel(today.total)}</span>
-              <span className="text-[11px] num-tab" style={{color: diffColor}}>
-                Δ 24H {diffStr}
-              </span>
-            </div>
-          </div>
-          <div className="mt-8 reveal delay-3">
-            <div className="tag mb-2">REGISTRO</div>
-            <div className="font-display text-xl">{fmtDateFull(today.row.dateStr)}</div>
-            <div className="text-[11px] text-[var(--mute)] mt-1 num-tab">
-              {today.row.start && today.row.end
-                ? `${today.row.start.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} → ${today.row.end.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}`
-                : "—"}
-            </div>
-          </div>
-        </div>
-
-        <div className="md:col-span-7 grid grid-cols-2 gap-x-8 gap-y-2 content-start">
-          {today.parts.map((p,i)=>(<MetricCard key={p.key} part={p} index={i} />))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function TrendChart({ series }){
-  // series: [{date,total}]
-  const data = series.map(s => ({
-    date: fmtDate(s.dateStr),
-    score: s.total,
-    rhr: s.rhr,
-  }));
-  return (
-    <div className="h-64">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{top:20,right:20,left:0,bottom:0}}>
-          <defs>
-            <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#B8D97A" stopOpacity={.4}/>
-              <stop offset="100%" stopColor="#B8D97A" stopOpacity={0}/>
-            </linearGradient>
-          </defs>
-          <CartesianGrid stroke="#26251F" strokeDasharray="0" vertical={false}/>
-          <XAxis dataKey="date" stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}}
-                 interval={Math.max(0, Math.floor(data.length/8))}/>
-          <YAxis stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}} domain={[0,100]}/>
-          <Tooltip
-            contentStyle={{background:"#0E0E0D",border:"1px solid #26251F",borderRadius:0,fontFamily:"JetBrains Mono",fontSize:11}}
-            labelStyle={{color:"#78746B"}}
-            itemStyle={{color:"#F2EFE8"}}
-          />
-          <ReferenceLine y={85} stroke="#26251F" strokeDasharray="2 4" label={{value:"ÓTIMO",position:"right",fill:"#78746B",fontSize:9}}/>
-          <ReferenceLine y={70} stroke="#26251F" strokeDasharray="2 4"/>
-          <Area type="monotone" dataKey="score" stroke="#B8D97A" strokeWidth={1.5} fill="url(#scoreGrad)" />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function RhrChart({ series }){
-  const data = series.map(s => ({ date: fmtDate(s.dateStr), rhr: s.rhr }));
-  return (
-    <div className="h-48">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{top:10,right:20,left:0,bottom:0}}>
-          <CartesianGrid stroke="#26251F" strokeDasharray="0" vertical={false}/>
-          <XAxis dataKey="date" stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}}
-                 interval={Math.max(0, Math.floor(data.length/8))}/>
-          <YAxis stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}} domain={['dataMin-2','dataMax+2']}/>
-          <Tooltip contentStyle={{background:"#0E0E0D",border:"1px solid #26251F",borderRadius:0,fontFamily:"JetBrains Mono",fontSize:11}}/>
-          <Line type="monotone" dataKey="rhr" stroke="#7FA7C9" strokeWidth={1.5} dot={false}/>
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function StageStackChart({ series }){
-  const data = series.map(s => ({
-    date: fmtDate(s.dateStr),
-    deep: s.row.deep||0,
-    rem:  s.row.rem||0,
-    light:s.row.light||0,
-  }));
-  return (
-    <div className="h-48">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{top:10,right:20,left:0,bottom:0}}>
-          <CartesianGrid stroke="#26251F" strokeDasharray="0" vertical={false}/>
-          <XAxis dataKey="date" stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}}
-                 interval={Math.max(0, Math.floor(data.length/8))}/>
-          <YAxis stroke="#78746B" fontSize={10} tickLine={false} axisLine={{stroke:"#26251F"}}/>
-          <Tooltip contentStyle={{background:"#0E0E0D",border:"1px solid #26251F",borderRadius:0,fontFamily:"JetBrains Mono",fontSize:11}}/>
-          <Bar dataKey="deep"  stackId="a" fill="#B8D97A" />
-          <Bar dataKey="rem"   stackId="a" fill="#7FA7C9" />
-          <Bar dataKey="light" stackId="a" fill="#3D3C35" />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function KPI({ label, value, unit, sub, color }){
-  return (
-    <div className="border-t hairline pt-4 pr-3">
-      <div className="tag">{label}</div>
-      <div className="mt-2 flex items-baseline gap-2">
-        <div className="font-display num-tab text-4xl leading-none" style={{color: color||"var(--bone)"}}>{value}</div>
-        {unit && <div className="text-[10px] text-[var(--mute)] num-tab">{unit}</div>}
-      </div>
-      {sub && <div className="text-[10px] text-[var(--mute)] num-tab mt-2">{sub}</div>}
-    </div>
-  );
-}
-
-function Summary({ series }){
-  // últimas 7 e 30
-  const last = (n) => series.slice(-n);
-  const avg = (arr, k) => arr.length ? arr.reduce((a,b)=>a+(b[k]||0),0)/arr.length : 0;
-
-  const s7 = last(7);
-  const s30 = last(30);
-  const avg7 = avg(s7,"total");
-  const avg30 = avg(s30,"total");
-
-  // streak: quantos dias consecutivos >=70
-  let streak = 0;
-  for (let i=series.length-1; i>=0; i--){
-    if (series[i].total >= 70) streak++;
-    else break;
+<script>
+(function(){
+  if (typeof React === "undefined" || typeof ReactDOM === "undefined") {
+    var msg = document.getElementById("boot-msg");
+    if (msg) msg.textContent = "React falhou ao carregar";
+    return;
   }
+  var e = React.createElement;
+  var useState = React.useState, useEffect = React.useEffect, useMemo = React.useMemo;
 
-  // best day
-  const best = series.slice().sort((a,b)=>b.total-a.total)[0];
+  var SHEET_ID  = "1hPbBeSYai8n_GpzLWLCAb1ny-4shnWlxeS4BAVdMFEc";
+  var SHEET_GID = "258378049";
+  var CSV_URL   = "https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?tqx=out:csv&gid="+SHEET_GID;
+  var REFRESH_MS = 5*60*1000;
 
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8">
-      <KPI label="Média 7 DIAS" value={avg7.toFixed(0)} unit="/100" color={bandColor(avg7)}
-           sub={`${s7.length} registros`} />
-      <KPI label="Média 30 DIAS" value={avg30.toFixed(0)} unit="/100" color={bandColor(avg30)}
-           sub={`${s30.length} registros`} />
-      <KPI label="Streak ≥70" value={streak} unit="dias" color="var(--green)"
-           sub="sequência atual" />
-      <KPI label="PR · melhor" value={best?.total || 0} unit="/100" color="var(--green)"
-           sub={best ? fmtDateFull(best.dateStr) : "—"} />
-    </div>
-  );
-}
+  var WEIGHTS = { duration:22, efficiency:20, rhr:25, deep:10, rem:10, consistency:13 };
 
-function Distribution({ series }){
-  const buckets = [
-    {label:"85–100 ÓTIMO", min:85, color:"var(--green)"},
-    {label:"70–84  BOM",   min:70, color:"var(--blue)"},
-    {label:"55–69  REGULAR", min:55, color:"var(--amber)"},
-    {label:"0–54   ABAIXO", min:0,  color:"var(--red)"},
-  ];
-  const counts = buckets.map(b => {
-    const c = series.filter(s => {
-      if (b.min === 85) return s.total >= 85;
-      if (b.min === 70) return s.total >= 70 && s.total < 85;
-      if (b.min === 55) return s.total >= 55 && s.total < 70;
-      return s.total < 55;
-    }).length;
-    return { ...b, count: c, pct: series.length ? c/series.length*100 : 0 };
-  });
-  return (
-    <div className="space-y-3">
-      {counts.map((b,i)=>(
-        <div key={i}>
-          <div className="flex justify-between text-[10px] tracking-widest num-tab mb-1">
-            <span style={{color:b.color}}>{b.label}</span>
-            <span className="text-[var(--mute)]">{b.count}  ·  {b.pct.toFixed(0)}%</span>
-          </div>
-          <div className="h-[3px] bg-[var(--line)]">
-            <div style={{width:`${b.pct}%`, background:b.color, transition:"width .9s ease"}} className="h-full"></div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Log({ series }){
-  const rows = series.slice(-14).reverse();
-  return (
-    <div className="border-t hairline">
-      <table className="w-full text-[11px] num-tab">
-        <thead>
-          <tr className="text-[var(--mute)] tag">
-            <th className="text-left py-3 pr-4">Data</th>
-            <th className="text-left py-3 pr-4 hidden md:table-cell">Dormir</th>
-            <th className="text-right py-3 pr-4">Dur</th>
-            <th className="text-right py-3 pr-4">Ef%</th>
-            <th className="text-right py-3 pr-4 hidden md:table-cell">Deep</th>
-            <th className="text-right py-3 pr-4 hidden md:table-cell">REM</th>
-            <th className="text-right py-3 pr-4">FC</th>
-            <th className="text-right py-3">Score</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((s,i)=>(
-            <tr key={i} className="border-t hairline">
-              <td className="py-3 pr-4">{fmtDateFull(s.dateStr)}</td>
-              <td className="py-3 pr-4 hidden md:table-cell text-[var(--mute)]">
-                {s.start ? s.start.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) : "—"}
-              </td>
-              <td className="text-right py-3 pr-4">{s.row.asleep ? `${Math.floor(s.row.asleep/60)}h${String(s.row.asleep%60).padStart(2,"0")}` : "—"}</td>
-              <td className="text-right py-3 pr-4">{s.row.efficiency ?? "—"}</td>
-              <td className="text-right py-3 pr-4 hidden md:table-cell">{s.row.deep ?? "—"}</td>
-              <td className="text-right py-3 pr-4 hidden md:table-cell">{s.row.rem ?? "—"}</td>
-              <td className="text-right py-3 pr-4">{s.row.rhr ?? "—"}</td>
-              <td className="text-right py-3 font-display text-lg" style={{color: bandColor(s.total)}}>{s.total}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function Footer({ lastUpdate }){
-  return (
-    <footer className="border-t hairline mt-16">
-      <div className="px-6 md:px-10 py-8 grid grid-cols-1 md:grid-cols-3 gap-8 text-[10px] text-[var(--mute)] tracking-widest">
-        <div>
-          <div className="tag mb-2" style={{color:"var(--bone)"}}>MÉTODO</div>
-          <p className="leading-relaxed">
-            Score composto 0–100 ponderando 6 vetores de performance.
-            Pesos e thresholds recalibrados com base na validação
-            do Fitbit Inspire 2 vs polissonografia:
-            menos peso em Deep/REM (specificity ~50-59%),
-            mais peso em FC Repouso e Duração (medição confiável).
-            Soneca &lt; 180min é descartada.
-          </p>
-        </div>
-        <div>
-          <div className="tag mb-2" style={{color:"var(--bone)"}}>PESOS · CALIBRADO P/ INSPIRE 2</div>
-          <ul className="space-y-1 num-tab">
-            <li>FC REPOUSO — 25%</li>
-            <li>DURAÇÃO — 22%</li>
-            <li>EFICIÊNCIA — 20%</li>
-            <li>REGULARIDADE — 13%</li>
-            <li>DEEP — 10%</li>
-            <li>REM — 10%</li>
-          </ul>
-        </div>
-        <div>
-          <div className="tag mb-2" style={{color:"var(--bone)"}}>FONTE</div>
-          <p className="leading-relaxed">
-            Leitura direta de Google Sheets via CSV export.
-            Refresh automático a cada 5 min.
-            Última sincronização: <span className="num-tab" style={{color:"var(--bone)"}}>{lastUpdate || "—"}</span>
-          </p>
-        </div>
-      </div>
-      <div className="px-6 md:px-10 py-4 border-t hairline flex items-center justify-between text-[10px] tracking-widest text-[var(--mute)]">
-        <span>PROTOCOL · CAIO · {new Date().getFullYear()}</span>
-        <span>DON'T DIE.</span>
-      </div>
-    </footer>
-  );
-}
-
-/* ============================================================
-   APP
-   ============================================================ */
-function App(){
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [lastUpdate, setLastUpdate] = useState(null);
-  const [range, setRange] = useState("30"); // 30, 90, all
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const controller = new AbortController();
-      const timeout = setTimeout(()=>controller.abort(), 15000);
-      const res = await fetch(CSV_URL + "&_t=" + Date.now(), {signal:controller.signal});
-      clearTimeout(timeout);
-      if (res.status === 403 || res.status === 401) {
-        throw new Error("PLANILHA PRIVADA — habilite 'Qualquer pessoa com o link · Leitor' no Compartilhar.");
-      }
-      if (!res.ok) throw new Error("HTTP "+res.status);
-      const text = await res.text();
-      if (text.trim().startsWith("<") || text.includes("<!DOCTYPE")) {
-        throw new Error("PLANILHA PRIVADA — Google retornou HTML de login em vez de CSV. Libere o acesso em Compartilhar → Qualquer pessoa com o link.");
-      }
-      const parsed = Papa.parse(text, { header:true, skipEmptyLines:true });
-      const mapped = parsed.data.map(parseRow);
-      const processed = processRows(mapped);
-      if (!processed.length) throw new Error("CSV lido mas sem registros válidos. Confira os nomes das colunas.");
-      setRows(processed);
-      setLastUpdate(new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}));
-      setError(null);
-    } catch(e){
-      setError(e.name === "AbortError" ? "Timeout ao ler planilha (15s)" : e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(()=>{
-    fetchData();
-    const id = setInterval(fetchData, REFRESH_MS);
-    return ()=>clearInterval(id);
-  },[]);
-
-  const scored = useMemo(()=>{
-    return rows.map(r => {
-      const s = computeScore(r, rows);
-      return { ...s, row: r, dateStr: r.dateStr, start: r.start, rhr: r.rhr };
+  function scoreDuration(min){
+    if(!min) return 0;
+    if(min>=390&&min<=480) return 100;
+    if(min>=360&&min<390) return 80+(min-360)/30*20;
+    if(min>480&&min<=540) return 100-(min-480)/60*15;
+    if(min>=330&&min<360) return 60+(min-330)/30*20;
+    if(min>540&&min<=600) return 85-(min-540)/60*20;
+    if(min<330) return Math.max(0,min/330*60);
+    return Math.max(0,65-(min-600)/60*30);
+  }
+  function scoreEfficiency(eff){
+    if(!eff) return 0;
+    if(eff>=88) return 100;
+    if(eff>=85) return 80+(eff-85)/3*20;
+    if(eff>=82) return 60+(eff-82)/3*20;
+    if(eff>=78) return 40+(eff-78)/4*20;
+    if(eff>=68) return 20+(eff-68)/10*20;
+    return Math.max(0,eff/68*20);
+  }
+  function scoreDeep(deep,total){
+    if(!deep||!total) return 0;
+    var pct=deep/total*100;
+    if(pct>=17&&pct<=28) return 100;
+    if(pct>=14&&pct<17) return 75+(pct-14)/3*25;
+    if(pct>28&&pct<=33) return 100-(pct-28)/5*15;
+    if(pct>=10&&pct<14) return 45+(pct-10)/4*30;
+    if(pct>33) return Math.max(40,85-(pct-33)*2);
+    return Math.max(0,pct/10*45);
+  }
+  function scoreRem(rem,total){
+    if(!rem||!total) return 0;
+    var pct=rem/total*100;
+    if(pct>=22&&pct<=30) return 100;
+    if(pct>=18&&pct<22) return 75+(pct-18)/4*25;
+    if(pct>30&&pct<=35) return 100-(pct-30)/5*15;
+    if(pct>=13&&pct<18) return 45+(pct-13)/5*30;
+    if(pct>35) return Math.max(40,85-(pct-35)*2);
+    return Math.max(0,pct/13*45);
+  }
+  function scoreRhr(bpm){
+    if(!bpm) return 0;
+    if(bpm<=55) return 100;
+    if(bpm<=60) return 95-(bpm-55)*1;
+    if(bpm<=65) return 85-(bpm-60)*2;
+    if(bpm<=70) return 70-(bpm-65)*3;
+    if(bpm<=75) return 55-(bpm-70)*4;
+    if(bpm<=80) return 35-(bpm-75)*3;
+    if(bpm<=90) return Math.max(0,20-(bpm-80)*2);
+    return 0;
+  }
+  function scoreConsistency(bedtimes){
+    if(!bedtimes||bedtimes.length<3) return null;
+    var mins = bedtimes.map(function(d){
+      var h=d.getHours(),m=d.getMinutes(),t=h*60+m;
+      if(h<12) t+=24*60;
+      return t;
     });
-  },[rows]);
+    var avg = mins.reduce(function(a,b){return a+b;},0)/mins.length;
+    var v = mins.reduce(function(a,b){return a+(b-avg)*(b-avg);},0)/mins.length;
+    var std = Math.sqrt(v);
+    if(std<=20) return 100;
+    if(std<=40) return 85;
+    if(std<=60) return 70;
+    if(std<=90) return 50;
+    if(std<=120) return 30;
+    return Math.max(0, 30-(std-120)/4);
+  }
 
-  const filtered = useMemo(()=>{
-    if (range === "all") return scored;
-    const n = parseInt(range,10);
-    return scored.slice(-n);
-  },[scored, range]);
+  function parseRow(r){
+    function num(v){
+      if(v==null||v==="") return null;
+      var n = parseFloat(String(v).replace(",","."));
+      return isNaN(n)?null:n;
+    }
+    function pISO(s){
+      if(!s) return null;
+      var d = new Date(s);
+      return isNaN(d.getTime())?null:d;
+    }
+    function get(keys){
+      for(var i=0;i<keys.length;i++){
+        for(var k in r){
+          if(Object.prototype.hasOwnProperty.call(r,k) && k.trim().toLowerCase()===keys[i].toLowerCase())
+            return r[k];
+        }
+      }
+      return null;
+    }
+    return {
+      dateStr: get(["Data","data"]),
+      start: pISO(get(["Início","Inicio","inicio"])),
+      end:   pISO(get(["Fim","fim"])),
+      duration:   num(get(["Duração (min)","Duracao (min)","duracao"])),
+      asleep:     num(get(["Min Dormido","min dormido"])),
+      awake:      num(get(["Min Acordado","min acordado"])),
+      efficiency: num(get(["Eficiência %","Eficiencia %","eficiencia"])),
+      deep:       num(get(["Deep (min)","deep"])),
+      light:      num(get(["Light (min)","light"])),
+      rem:        num(get(["REM (min)","rem"])),
+      rhr:        num(get(["BPM Repouso","bpm repouso","rhr"]))
+    };
+  }
 
-  const today = scored[scored.length-1];
-  const yesterday = scored[scored.length-2];
+  function processRows(rows){
+    var byDate = {};
+    rows.forEach(function(r){
+      if(!r.dateStr || !r.duration) return;
+      var isNap = r.duration < 180 || (r.deep===0 && r.rem===0);
+      if(isNap) return;
+      var prev = byDate[r.dateStr];
+      if(!prev || r.duration > prev.duration) byDate[r.dateStr] = r;
+    });
+    var arr = [];
+    for(var k in byDate) if(Object.prototype.hasOwnProperty.call(byDate,k)) arr.push(byDate[k]);
+    return arr.filter(function(r){return r.start;}).sort(function(a,b){return a.start-b.start;});
+  }
 
-  if (loading && !rows.length) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="tag mb-2">PROTOCOL</div>
-          <div className="font-display text-4xl">Sincronizando<span className="blink">_</span></div>
-          <div className="text-[10px] text-[var(--mute)] mt-2 tracking-widest">LENDO GOOGLE SHEETS</div>
-        </div>
-      </div>
+  function computeScore(row, history){
+    var sD=scoreDuration(row.asleep);
+    var sE=scoreEfficiency(row.efficiency);
+    var sDp=scoreDeep(row.deep,row.asleep);
+    var sR=scoreRem(row.rem,row.asleep);
+    var sH=scoreRhr(row.rhr);
+    var idx = -1;
+    for(var i=0;i<history.length;i++) if(history[i].dateStr===row.dateStr){idx=i;break;}
+    var wStart = Math.max(0, idx-6);
+    var win = history.slice(wStart, idx+1).map(function(h){return h.start;}).filter(Boolean);
+    var sC = scoreConsistency(win);
+
+    function fmt(m){
+      if(m==null) return "—";
+      return Math.floor(m/60)+"h"+String(m%60).padStart(2,"0");
+    }
+
+    var parts = [
+      {key:"duration",label:"Duração",v:sD,w:WEIGHTS.duration,raw: fmt(row.asleep)},
+      {key:"efficiency",label:"Eficiência",v:sE,w:WEIGHTS.efficiency,raw: row.efficiency?row.efficiency+"%":"—"},
+      {key:"deep",label:"Deep",v:sDp,w:WEIGHTS.deep,raw: (row.deep!=null&&row.asleep)?(row.deep+"m · "+(row.deep/row.asleep*100).toFixed(0)+"%"):"—"},
+      {key:"rem",label:"REM",v:sR,w:WEIGHTS.rem,raw: (row.rem!=null&&row.asleep)?(row.rem+"m · "+(row.rem/row.asleep*100).toFixed(0)+"%"):"—"},
+      {key:"rhr",label:"FC Repouso",v:sH,w:WEIGHTS.rhr,raw: row.rhr?(row.rhr+" bpm"):"—"},
+      {key:"consistency",label:"Regularidade",v:sC,w:WEIGHTS.consistency,raw: sC!==null?"7-dia":"dados insuf."}
+    ];
+    var valid = parts.filter(function(p){return p.v!=null;});
+    var totalW = valid.reduce(function(a,p){return a+p.w;},0);
+    var total = valid.reduce(function(a,p){return a + p.v*(p.w/totalW);},0);
+    return { total: Math.round(total), parts: parts };
+  }
+
+  function bandColor(v){
+    if(v==null) return "var(--mute)";
+    if(v>=85) return "var(--green)";
+    if(v>=70) return "var(--blue)";
+    if(v>=55) return "var(--amber)";
+    return "var(--red)";
+  }
+  function bandLabel(v){
+    if(v>=85) return "ÓTIMO";
+    if(v>=70) return "BOM";
+    if(v>=55) return "REGULAR";
+    return "ABAIXO";
+  }
+  function fmtDate(s){
+    if(!s) return "";
+    var p=s.split("/"), mn=["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+    return p[0]+" "+(mn[parseInt(p[1],10)-1]||"");
+  }
+  function fmtTime(d){
+    if(!d) return "—";
+    return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+  }
+
+  function LineChart(props){
+    var data = props.data;
+    var W=800, H=props.height||220, pad={l:40,r:20,t:20,b:30};
+    if(!data.length) return null;
+    var ys = data.map(function(d){return d.y;});
+    var yMin = props.yMin != null ? props.yMin : Math.min.apply(null, ys);
+    var yMax = props.yMax != null ? props.yMax : Math.max.apply(null, ys);
+    if(yMin===yMax){yMin=yMin-1;yMax=yMax+1;}
+    var xStep = (W-pad.l-pad.r) / Math.max(1, data.length-1);
+    function px(i){return pad.l + i*xStep;}
+    function py(y){return pad.t + (1 - (y-yMin)/(yMax-yMin)) * (H-pad.t-pad.b);}
+
+    var pts = data.map(function(d,i){return px(i)+","+py(d.y);}).join(" ");
+    var areaD = "M "+pad.l+","+py(data[0].y)+" " +
+      data.map(function(d,i){return "L "+px(i)+","+py(d.y);}).join(" ") +
+      " L "+px(data.length-1)+","+(H-pad.b)+" L "+pad.l+","+(H-pad.b)+" Z";
+
+    var yTicks = props.yMax===100 ? [0,25,50,75,100] : (function(){
+      var t=[], step=(yMax-yMin)/4;
+      for(var i=0;i<=4;i++) t.push(Math.round(yMin+i*step));
+      return t;
+    })();
+    var xEvery = Math.max(1, Math.floor(data.length/7));
+
+    var gradId = "g_"+Math.random().toString(36).slice(2,8);
+
+    return e("div",{className:"chart"+(props.small?" chart-small":"")},
+      e("svg",{className:"ch", viewBox:"0 0 "+W+" "+H, preserveAspectRatio:"none"},
+        e("defs",null,
+          e("linearGradient",{id:gradId, x1:"0",y1:"0",x2:"0",y2:"1"},
+            e("stop",{offset:"0%",stopColor:props.color||"#B8D97A",stopOpacity:.4}),
+            e("stop",{offset:"100%",stopColor:props.color||"#B8D97A",stopOpacity:0})
+          )
+        ),
+        yTicks.map(function(t,i){
+          return e("g",{key:"y"+i},
+            e("line",{x1:pad.l,y1:py(t),x2:W-pad.r,y2:py(t),stroke:"#26251F"}),
+            e("text",{x:pad.l-8,y:py(t)+3,fontSize:10,fill:"#78746B",textAnchor:"end"},t)
+          );
+        }),
+        (props.refs||[]).map(function(r,i){
+          return e("g",{key:"r"+i},
+            e("line",{x1:pad.l,y1:py(r.y),x2:W-pad.r,y2:py(r.y),stroke:"#26251F",strokeDasharray:"2 4"}),
+            r.label ? e("text",{x:W-pad.r,y:py(r.y)-4,fontSize:9,fill:"#78746B",textAnchor:"end"},r.label) : null
+          );
+        }),
+        props.area && e("path",{d:areaD,fill:"url(#"+gradId+")"}),
+        e("polyline",{points:pts,fill:"none",stroke:props.color||"#B8D97A",strokeWidth:1.5}),
+        data.map(function(d,i){
+          if(i%xEvery!==0) return null;
+          return e("text",{key:"x"+i,x:px(i),y:H-10,fontSize:10,fill:"#78746B",textAnchor:"middle"},d.x);
+        })
+      )
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="max-w-md">
-          <div className="tag mb-2" style={{color:"var(--red)"}}>ERRO DE SINCRONIZAÇÃO</div>
-          <div className="font-display text-3xl mb-4">Não consegui ler a planilha.</div>
-          <p className="text-[12px] text-[var(--mute)] leading-relaxed">
-            Verifica se a planilha está com acesso "Qualquer pessoa com o link → Leitor".
-            Detalhe técnico: {error}
-          </p>
-          <button onClick={fetchData} className="mt-6 border hairline px-4 py-2 tag hover:bg-[var(--char)]">
-            TENTAR NOVAMENTE
-          </button>
-        </div>
-      </div>
+  function StackedBar(props){
+    var data = props.data;
+    var W=800, H=192, pad={l:40,r:20,t:10,b:30};
+    if(!data.length) return null;
+    var max = Math.max.apply(null, data.map(function(d){return (d.deep||0)+(d.rem||0)+(d.light||0);})) || 1;
+    var xStep = (W-pad.l-pad.r) / data.length;
+    var bw = Math.max(1, xStep*.7);
+    var xEvery = Math.max(1, Math.floor(data.length/7));
+
+    return e("div",{className:"chart chart-small"},
+      e("svg",{className:"ch",viewBox:"0 0 "+W+" "+H, preserveAspectRatio:"none"},
+        [0,.25,.5,.75,1].map(function(f,i){
+          var y = pad.t + (1-f)*(H-pad.t-pad.b);
+          return e("line",{key:"g"+i,x1:pad.l,y1:y,x2:W-pad.r,y2:y,stroke:"#26251F"});
+        }),
+        data.map(function(d,i){
+          var x = pad.l + i*xStep + (xStep-bw)/2;
+          var y0 = H-pad.b;
+          var hDeep = (d.deep||0)/max * (H-pad.t-pad.b);
+          var hRem  = (d.rem ||0)/max * (H-pad.t-pad.b);
+          var hLight= (d.light||0)/max * (H-pad.t-pad.b);
+          return e("g",{key:"b"+i},
+            e("rect",{x:x,y:y0-hLight,width:bw,height:hLight,fill:"#3D3C35"}),
+            e("rect",{x:x,y:y0-hLight-hRem,width:bw,height:hRem,fill:"#7FA7C9"}),
+            e("rect",{x:x,y:y0-hLight-hRem-hDeep,width:bw,height:hDeep,fill:"#B8D97A"})
+          );
+        }),
+        data.map(function(d,i){
+          if(i%xEvery!==0) return null;
+          return e("text",{key:"x"+i,x:pad.l+i*xStep+xStep/2,y:H-10,fontSize:10,fill:"#78746B",textAnchor:"middle"},d.x);
+        })
+      )
     );
   }
 
-  if (!today) return null;
+  function Header(props){
+    return e("header",null,
+      e("div",{className:"head-bar"},
+        e("div",{style:{display:"flex",alignItems:"center",gap:12}},
+          e("div",{className:"dot"}),
+          e("span",{className:"tag"},"PROTOCOL · v1.0")
+        ),
+        e("div",{style:{display:"flex",alignItems:"center",gap:24,fontSize:10,letterSpacing:".2em",color:"var(--mute)"}},
+          e("span",{className:"num"},"SYNC "+(props.loading?"…":"LIVE")),
+          e("span",{className:"num"}, props.lastUpdate||"—"),
+          e("span",{className:"blink",style:{color:"var(--green)"}},"●")
+        )
+      ),
+      e("div",{className:"marquee"},
+        e("div",{className:"marquee-track"},
+          "· PERFORMANCE INTEGRATIVA · SLEEP ARCHITECTURE · AUTONOMIC RECOVERY · CIRCADIAN ALIGNMENT · HRV PROXY · DEEP SLEEP CONSOLIDATION · REM MENTAL RESTORATION · DON'T DIE · ".repeat(3)
+        )
+      )
+    );
+  }
 
-  return (
-    <div className="grain min-h-screen">
-      <Header lastUpdate={lastUpdate} loading={loading}/>
-      <ScoreHero today={today} yesterday={yesterday}/>
+  function Bar100(props){
+    var v = Math.max(0, Math.min(100, props.value||0));
+    return e("div",{className:"bar"},
+      e("div",{style:{width:v+"%",background:bandColor(v)}}),
+      e("div",{className:"bar-tick"})
+    );
+  }
 
-      <section className="px-6 md:px-10 py-10 border-b hairline">
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <div className="tag mb-1">SÉRIE TEMPORAL · ÍNDICE</div>
-            <h2 className="font-display text-3xl md:text-4xl">Trajetória</h2>
-          </div>
-          <div className="flex gap-2">
-            {["30","90","all"].map(r=>(
-              <button key={r} onClick={()=>setRange(r)}
-                className={`tag border hairline px-3 py-1 ${range===r?"bg-[var(--bone)] text-[var(--paper)]":"text-[var(--mute)] hover:text-[var(--bone)]"}`}>
-                {r==="all"?"TUDO":r+"D"}
-              </button>
-            ))}
-          </div>
-        </div>
-        <TrendChart series={filtered}/>
-      </section>
+  function MetricCard(props){
+    var p = props.part, i = props.index;
+    return e("div",{className:"metric reveal d"+Math.min(6,i+2)},
+      e("div",{style:{display:"flex",alignItems:"baseline",justifyContent:"space-between"}},
+        e("div",{className:"tag"}, String(i+1).padStart(2,"0")+" · "+p.label),
+        e("div",{className:"num",style:{fontSize:11,color:bandColor(p.v)}}, bandLabel(p.v))
+      ),
+      e("div",{style:{marginTop:12,display:"flex",alignItems:"baseline",gap:12}},
+        e("div",{className:"display num metric-val"}, p.v==null?"—":Math.round(p.v)),
+        e("div",{className:"num",style:{fontSize:11,color:"var(--mute)"}},"/100")
+      ),
+      e(Bar100,{value:p.v}),
+      e("div",{style:{marginTop:8,display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--mute)"}},
+        e("span",{className:"num"},p.raw),
+        e("span",{className:"num"},"peso "+p.w+"%")
+      )
+    );
+  }
 
-      <section className="px-6 md:px-10 py-10 border-b hairline grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div>
-          <div className="tag mb-1">ARQUITETURA DO SONO</div>
-          <h3 className="font-display text-2xl mb-4">Deep · REM · Light</h3>
-          <StageStackChart series={filtered}/>
-          <div className="mt-3 flex gap-4 text-[10px] tracking-widest">
-            <span className="flex items-center gap-2"><span className="w-3 h-[2px]" style={{background:"#B8D97A"}}></span>DEEP</span>
-            <span className="flex items-center gap-2"><span className="w-3 h-[2px]" style={{background:"#7FA7C9"}}></span>REM</span>
-            <span className="flex items-center gap-2"><span className="w-3 h-[2px]" style={{background:"#3D3C35"}}></span>LIGHT</span>
-          </div>
-        </div>
-        <div>
-          <div className="tag mb-1">RECUPERAÇÃO AUTONÔMICA</div>
-          <h3 className="font-display text-2xl mb-4">FC Repouso</h3>
-          <RhrChart series={filtered}/>
-          <p className="text-[11px] text-[var(--mute)] mt-3 leading-relaxed">
-            Frequência cardíaca de repouso é proxy de recuperação do sistema nervoso autônomo.
-            Tendência descendente indica adaptação + condicionamento.
-          </p>
-        </div>
-      </section>
+  function Hero(props){
+    var t = props.today, y = props.yesterday;
+    var diff = y ? t.total - y.total : 0;
+    var diffStr = diff===0?"—":(diff>0?"+"+diff:String(diff));
+    var diffColor = diff>0?"var(--green)":diff<0?"var(--red)":"var(--mute)";
+    return e("section",{className:"hero"},
+      e("div",{style:{display:"flex",flexDirection:"column",justifyContent:"space-between"}},
+        e("div",{className:"reveal d1"},
+          e("div",{className:"tag",style:{marginBottom:8}},"ÍNDICE DE PERFORMANCE · HOJE"),
+          e("h1",{className:"display num glow hero-score",style:{color:bandColor(t.total)}}, t.total),
+          e("div",{style:{display:"flex",alignItems:"center",gap:16,marginTop:16}},
+            e("span",{className:"tag",style:{color:bandColor(t.total)}}, bandLabel(t.total)),
+            e("span",{className:"num",style:{fontSize:11,color:diffColor}}, "Δ 24H "+diffStr)
+          )
+        ),
+        e("div",{style:{marginTop:32},className:"reveal d3"},
+          e("div",{className:"tag",style:{marginBottom:8}},"REGISTRO"),
+          e("div",{className:"display",style:{fontSize:20}}, t.row.dateStr),
+          e("div",{className:"num",style:{fontSize:11,color:"var(--mute)",marginTop:4}},
+            (t.row.start&&t.row.end)?(fmtTime(t.row.start)+" → "+fmtTime(t.row.end)):"—")
+        )
+      ),
+      e("div",{className:"metrics"},
+        t.parts.map(function(p,i){return e(MetricCard,{key:p.key,part:p,index:i});})
+      )
+    );
+  }
 
-      <section className="px-6 md:px-10 py-10 border-b hairline">
-        <div className="tag mb-4">RESUMO</div>
-        <Summary series={filtered}/>
-      </section>
+  function Summary(props){
+    var s = props.series;
+    var s7 = s.slice(-7), s30 = s.slice(-30);
+    function avg(arr){return arr.length?arr.reduce(function(a,b){return a+(b.total||0);},0)/arr.length:0;}
+    var avg7 = avg(s7), avg30 = avg(s30);
+    var streak = 0;
+    for(var i=s.length-1;i>=0;i--){ if(s[i].total>=70) streak++; else break; }
+    var best = s.slice().sort(function(a,b){return b.total-a.total;})[0];
 
-      <section className="px-6 md:px-10 py-10 border-b hairline grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div>
-          <div className="tag mb-1">DISTRIBUIÇÃO</div>
-          <h3 className="font-display text-2xl mb-6">Bandas de performance · {filtered.length} dias</h3>
-          <Distribution series={filtered}/>
-        </div>
-        <div>
-          <div className="tag mb-1">ÚLTIMOS 14 DIAS</div>
-          <h3 className="font-display text-2xl mb-2">Log</h3>
-          <Log series={filtered}/>
-        </div>
-      </section>
+    function KPI(label,val,unit,sub,color){
+      return e("div",{className:"kpi"},
+        e("div",{className:"tag"},label),
+        e("div",{style:{marginTop:8,display:"flex",alignItems:"baseline",gap:8}},
+          e("div",{className:"display num kpi-val",style:{color:color||"var(--bone)"}}, val),
+          unit ? e("div",{className:"num",style:{fontSize:10,color:"var(--mute)"}},unit) : null
+        ),
+        sub ? e("div",{className:"num",style:{fontSize:10,color:"var(--mute)",marginTop:8}},sub) : null
+      );
+    }
 
-      <Footer lastUpdate={lastUpdate}/>
-    </div>
-  );
-}
+    return e("div",{className:"kpis"},
+      KPI("Média 7 DIAS", avg7.toFixed(0), "/100", s7.length+" registros", bandColor(avg7)),
+      KPI("Média 30 DIAS", avg30.toFixed(0), "/100", s30.length+" registros", bandColor(avg30)),
+      KPI("Streak ≥70", streak, "dias", "sequência atual", "var(--green)"),
+      KPI("PR · melhor", best?best.total:0, "/100", best?best.dateStr:"—", "var(--green)")
+    );
+  }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  function Distribution(props){
+    var s = props.series;
+    var buckets = [
+      {label:"85–100 ÓTIMO", test:function(v){return v>=85;}, color:"var(--green)"},
+      {label:"70–84  BOM",   test:function(v){return v>=70&&v<85;}, color:"var(--blue)"},
+      {label:"55–69  REGULAR", test:function(v){return v>=55&&v<70;}, color:"var(--amber)"},
+      {label:"0–54   ABAIXO", test:function(v){return v<55;}, color:"var(--red)"}
+    ];
+    return e("div",null,
+      buckets.map(function(b,i){
+        var c = s.filter(function(x){return b.test(x.total);}).length;
+        var pct = s.length?c/s.length*100:0;
+        return e("div",{key:i,style:{marginBottom:12}},
+          e("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,letterSpacing:".22em",marginBottom:4}},
+            e("span",{className:"num",style:{color:b.color}}, b.label),
+            e("span",{className:"num",style:{color:"var(--mute)"}}, c+"  ·  "+pct.toFixed(0)+"%")
+          ),
+          e("div",{style:{height:3,background:"var(--line)"}},
+            e("div",{style:{width:pct+"%",height:"100%",background:b.color,transition:"width .9s ease"}})
+          )
+        );
+      })
+    );
+  }
+
+  function Log(props){
+    var rows = props.series.slice(-14).reverse();
+    return e("div",{style:{borderTop:"1px solid var(--line)",overflowX:"auto"}},
+      e("table",null,
+        e("thead",null,
+          e("tr",null,
+            e("th",null,"Data"),
+            e("th",{className:"hide-sm"},"Dormir"),
+            e("th",{className:"text-right"},"Dur"),
+            e("th",{className:"text-right"},"Ef%"),
+            e("th",{className:"text-right hide-sm"},"Deep"),
+            e("th",{className:"text-right hide-sm"},"REM"),
+            e("th",{className:"text-right"},"FC"),
+            e("th",{className:"text-right"},"Score")
+          )
+        ),
+        e("tbody",null,
+          rows.map(function(s,i){
+            return e("tr",{key:i},
+              e("td",{className:"num"}, s.dateStr),
+              e("td",{className:"num hide-sm",style:{color:"var(--mute)"}}, s.start?fmtTime(s.start):"—"),
+              e("td",{className:"num text-right"}, s.row.asleep?(Math.floor(s.row.asleep/60)+"h"+String(s.row.asleep%60).padStart(2,"0")):"—"),
+              e("td",{className:"num text-right"}, s.row.efficiency!=null?s.row.efficiency:"—"),
+              e("td",{className:"num text-right hide-sm"}, s.row.deep!=null?s.row.deep:"—"),
+              e("td",{className:"num text-right hide-sm"}, s.row.rem!=null?s.row.rem:"—"),
+              e("td",{className:"num text-right"}, s.row.rhr!=null?s.row.rhr:"—"),
+              e("td",{className:"display text-right",style:{fontSize:18,color:bandColor(s.total)}}, s.total)
+            );
+          })
+        )
+      )
+    );
+  }
+
+  function Footer(props){
+    return e("footer",null,
+      e("div",{className:"foot-grid"},
+        e("div",null,
+          e("div",{className:"tag",style:{color:"var(--bone)",marginBottom:8}},"MÉTODO"),
+          e("p",{style:{lineHeight:1.6}},
+            "Score composto 0–100 ponderando 6 vetores. Pesos e thresholds recalibrados com base na validação do Fitbit Inspire 2 vs polissonografia: menos peso em Deep/REM (specificity 50–59%), mais peso em FC Repouso e Duração. Soneca < 180min é descartada.")
+        ),
+        e("div",null,
+          e("div",{className:"tag",style:{color:"var(--bone)",marginBottom:8}},"PESOS · INSPIRE 2"),
+          e("ul",{className:"num",style:{listStyle:"none",lineHeight:1.8}},
+            e("li",null,"FC REPOUSO — 25%"),
+            e("li",null,"DURAÇÃO — 22%"),
+            e("li",null,"EFICIÊNCIA — 20%"),
+            e("li",null,"REGULARIDADE — 13%"),
+            e("li",null,"DEEP — 10%"),
+            e("li",null,"REM — 10%")
+          )
+        ),
+        e("div",null,
+          e("div",{className:"tag",style:{color:"var(--bone)",marginBottom:8}},"FONTE"),
+          e("p",{style:{lineHeight:1.6}},
+            "Leitura direta de Google Sheets via CSV export. Refresh automático a cada 5 min. Última sincronização: ",
+            e("span",{className:"num",style:{color:"var(--bone)"}}, props.lastUpdate||"—"))
+        )
+      ),
+      e("div",{className:"foot-bottom"},
+        e("span",null,"PROTOCOL · CAIO · "+new Date().getFullYear()),
+        e("span",null,"DON'T DIE.")
+      )
+    );
+  }
+
+  function App(){
+    var s = useState([]); var rows = s[0], setRows = s[1];
+    var l = useState(true); var loading = l[0], setLoading = l[1];
+    var er = useState(null); var error = er[0], setError = er[1];
+    var lu = useState(null); var lastUpdate = lu[0], setLastUpdate = lu[1];
+    var rg = useState("30"); var range = rg[0], setRange = rg[1];
+
+    function fetchData(){
+      setLoading(true);
+      var controller = new AbortController();
+      var timeout = setTimeout(function(){controller.abort();}, 15000);
+      fetch(CSV_URL+"&_t="+Date.now(),{signal:controller.signal})
+        .then(function(res){
+          clearTimeout(timeout);
+          if(res.status===403||res.status===401) throw new Error("PLANILHA PRIVADA — libere 'Qualquer pessoa com o link · Leitor' no Compartilhar.");
+          if(!res.ok) throw new Error("HTTP "+res.status);
+          return res.text();
+        })
+        .then(function(text){
+          if(text.trim().indexOf("<")===0||text.indexOf("<!DOCTYPE")>-1)
+            throw new Error("PLANILHA PRIVADA — Google retornou HTML em vez de CSV. Libere acesso.");
+          var parsed = Papa.parse(text,{header:true,skipEmptyLines:true});
+          var mapped = parsed.data.map(parseRow);
+          var processed = processRows(mapped);
+          if(!processed.length) throw new Error("CSV lido mas sem registros válidos.");
+          setRows(processed);
+          var d = new Date();
+          setLastUpdate(String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"));
+          setError(null);
+        })
+        .catch(function(er){
+          setError(er.name==="AbortError"?"Timeout ao ler planilha (15s)":er.message);
+        })
+        .then(function(){ setLoading(false); });
+    }
+
+    useEffect(function(){
+      fetchData();
+      var id = setInterval(fetchData, REFRESH_MS);
+      return function(){clearInterval(id);};
+    }, []);
+
+    var scored = useMemo(function(){
+      return rows.map(function(r){
+        var s = computeScore(r, rows);
+        return { total:s.total, parts:s.parts, row:r, dateStr:r.dateStr, start:r.start, rhr:r.rhr };
+      });
+    }, [rows]);
+
+    var filtered = useMemo(function(){
+      if(range==="all") return scored;
+      return scored.slice(-parseInt(range,10));
+    }, [scored, range]);
+
+    if(loading && !rows.length){
+      return e("div",{style:{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center"}},
+        e("div",{style:{textAlign:"center"}},
+          e("div",{className:"tag",style:{marginBottom:8}},"PROTOCOL"),
+          e("div",{className:"display",style:{fontSize:36}},"Sincronizando",e("span",{className:"blink"},"_")),
+          e("div",{className:"tag",style:{marginTop:8}},"LENDO GOOGLE SHEETS")
+        )
+      );
+    }
+
+    if(error){
+      return e("div",{style:{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24}},
+        e("div",{style:{maxWidth:420}},
+          e("div",{className:"tag",style:{marginBottom:8,color:"var(--red)"}},"ERRO DE SINCRONIZAÇÃO"),
+          e("div",{className:"display",style:{fontSize:28,marginBottom:16}},"Não consegui ler a planilha."),
+          e("p",{style:{fontSize:11,color:"var(--mute)",lineHeight:1.6}}, error),
+          e("button",{className:"retry",onClick:fetchData},"TENTAR NOVAMENTE")
+        )
+      );
+    }
+
+    if(!scored.length) return null;
+    var today = scored[scored.length-1];
+    var yesterday = scored[scored.length-2];
+
+    var trendData = filtered.map(function(x){return {x:fmtDate(x.dateStr), y:x.total};});
+    var rhrData   = filtered.map(function(x){return {x:fmtDate(x.dateStr), y:x.rhr||0};});
+    var stackData = filtered.map(function(x){return {x:fmtDate(x.dateStr), deep:x.row.deep||0, rem:x.row.rem||0, light:x.row.light||0};});
+
+    return e("div",{className:"grain"},
+      e(Header,{lastUpdate:lastUpdate, loading:loading}),
+      e(Hero,{today:today, yesterday:yesterday}),
+
+      e("section",null,
+        e("div",{className:"section-head"},
+          e("div",null,
+            e("div",{className:"tag",style:{marginBottom:4}},"SÉRIE TEMPORAL · ÍNDICE"),
+            e("h2",{className:"display h2"},"Trajetória")
+          ),
+          e("div",{className:"range-btns"},
+            ["30","90","all"].map(function(r){
+              return e("button",{key:r,className:"range-btn"+(range===r?" on":""),onClick:function(){setRange(r);}},
+                r==="all"?"TUDO":r+"D");
+            })
+          )
+        ),
+        e(LineChart,{data:trendData, yMin:0, yMax:100, area:true, color:"#B8D97A", refs:[{y:85,label:"ÓTIMO"},{y:70,label:""}]})
+      ),
+
+      e("section",null,
+        e("div",{className:"two-col"},
+          e("div",null,
+            e("div",{className:"tag",style:{marginBottom:4}},"ARQUITETURA DO SONO"),
+            e("h3",{className:"display h3"},"Deep · REM · Light"),
+            e(StackedBar,{data:stackData}),
+            e("div",{style:{marginTop:12,display:"flex",gap:16,fontSize:10,letterSpacing:".2em"}},
+              e("span",{style:{display:"flex",alignItems:"center",gap:6}}, e("span",{style:{width:12,height:2,background:"#B8D97A"}}),"DEEP"),
+              e("span",{style:{display:"flex",alignItems:"center",gap:6}}, e("span",{style:{width:12,height:2,background:"#7FA7C9"}}),"REM"),
+              e("span",{style:{display:"flex",alignItems:"center",gap:6}}, e("span",{style:{width:12,height:2,background:"#3D3C35"}}),"LIGHT")
+            )
+          ),
+          e("div",null,
+            e("div",{className:"tag",style:{marginBottom:4}},"RECUPERAÇÃO AUTONÔMICA"),
+            e("h3",{className:"display h3"},"FC Repouso"),
+            e(LineChart,{data:rhrData, small:true, color:"#7FA7C9"}),
+            e("p",{style:{fontSize:11,color:"var(--mute)",marginTop:12,lineHeight:1.6}},
+              "Frequência cardíaca de repouso é proxy de recuperação do sistema nervoso autônomo. Tendência descendente indica adaptação + condicionamento.")
+          )
+        )
+      ),
+
+      e("section",null,
+        e("div",{className:"tag",style:{marginBottom:16}},"RESUMO"),
+        e(Summary,{series:filtered})
+      ),
+
+      e("section",null,
+        e("div",{className:"two-col"},
+          e("div",null,
+            e("div",{className:"tag",style:{marginBottom:4}},"DISTRIBUIÇÃO"),
+            e("h3",{className:"display h3"},"Bandas de performance · "+filtered.length+" dias"),
+            e(Distribution,{series:filtered})
+          ),
+          e("div",null,
+            e("div",{className:"tag",style:{marginBottom:4}},"ÚLTIMOS 14 DIAS"),
+            e("h3",{className:"display h3"},"Log"),
+            e(Log,{series:filtered})
+          )
+        )
+      ),
+
+      e(Footer,{lastUpdate:lastUpdate})
+    );
+  }
+
+  var rootEl = document.getElementById("root");
+  rootEl.innerHTML = "";
+  ReactDOM.createRoot(rootEl).render(e(App));
+})();
 </script>
+
 </body>
 </html>
