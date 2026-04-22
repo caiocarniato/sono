@@ -7,12 +7,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" crossorigin></script>
+<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js" crossorigin></script>
 
 <style>
   :root{
@@ -78,7 +78,28 @@
 </style>
 </head>
 <body class="min-h-screen">
-<div id="root"></div>
+<div id="root">
+  <div id="boot-fallback" style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;color:#F2EFE8;padding:24px;text-align:center">
+    <div>
+      <div style="font-size:10px;letter-spacing:.3em;color:#78746B;margin-bottom:8px">PROTOCOL · BOOT</div>
+      <div id="boot-msg" style="font-size:20px">Carregando scripts<span style="animation:blink 1.4s steps(2,end) infinite">_</span></div>
+      <div id="boot-hint" style="font-size:11px;color:#78746B;margin-top:16px;max-width:420px;line-height:1.6"></div>
+    </div>
+  </div>
+</div>
+<script>
+  // Se em 8s nada renderizou substituindo o fallback, provável CDN bloqueada
+  setTimeout(function(){
+    var el = document.getElementById("boot-fallback");
+    if (el) {
+      document.getElementById("boot-msg").textContent = "Scripts não carregaram";
+      document.getElementById("boot-hint").innerHTML =
+        "Se você usa <b>Brave</b>, clica no leão 🦁 na barra de endereço e desliga os Shields pra este site.<br><br>" +
+        "Se usa uBlock/AdBlock, desativa pra <b>caiocarniato.github.io</b>.<br><br>" +
+        "Ou abre em outro navegador (Chrome, Edge, Firefox) pra testar.";
+    }
+  }, 8000);
+</script>
 
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useMemo, useRef } = React;
@@ -707,17 +728,27 @@ function App(){
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(CSV_URL + "&_t=" + Date.now());
-      if (!res.ok) throw new Error("Falha ao buscar CSV ("+res.status+")");
+      const controller = new AbortController();
+      const timeout = setTimeout(()=>controller.abort(), 15000);
+      const res = await fetch(CSV_URL + "&_t=" + Date.now(), {signal:controller.signal});
+      clearTimeout(timeout);
+      if (res.status === 403 || res.status === 401) {
+        throw new Error("PLANILHA PRIVADA — habilite 'Qualquer pessoa com o link · Leitor' no Compartilhar.");
+      }
+      if (!res.ok) throw new Error("HTTP "+res.status);
       const text = await res.text();
+      if (text.trim().startsWith("<") || text.includes("<!DOCTYPE")) {
+        throw new Error("PLANILHA PRIVADA — Google retornou HTML de login em vez de CSV. Libere o acesso em Compartilhar → Qualquer pessoa com o link.");
+      }
       const parsed = Papa.parse(text, { header:true, skipEmptyLines:true });
       const mapped = parsed.data.map(parseRow);
       const processed = processRows(mapped);
+      if (!processed.length) throw new Error("CSV lido mas sem registros válidos. Confira os nomes das colunas.");
       setRows(processed);
       setLastUpdate(new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}));
       setError(null);
     } catch(e){
-      setError(e.message);
+      setError(e.name === "AbortError" ? "Timeout ao ler planilha (15s)" : e.message);
     } finally {
       setLoading(false);
     }
