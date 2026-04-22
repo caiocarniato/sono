@@ -151,15 +151,15 @@ if (typeof React !== "undefined" && typeof ReactDOM !== "undefined") window.__bo
   var CSV_URL   = "https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?tqx=out:csv&gid="+SHEET_GID;
   var REFRESH_MS = 5*60*1000;
 
-  var WEIGHTS = { duration:22, efficiency:20, rhr:25, deep:10, rem:10, consistency:13 };
+  var WEIGHTS = { duration:24, efficiency:18, rhr:22, deep:11, rem:11, consistency:14 };
 
   function scoreDuration(min){
     if(!min) return 0;
-    if(min>=390&&min<=480) return 100;
-    if(min>=360&&min<390) return 80+(min-360)/30*20;
-    if(min>480&&min<=540) return 100-(min-480)/60*15;
-    if(min>=330&&min<360) return 60+(min-330)/30*20;
-    if(min>540&&min<=600) return 85-(min-540)/60*20;
+    if(min>=420&&min<=510) return 100;
+    if(min>=390&&min<420) return 80+(min-390)/30*20;
+    if(min>510&&min<=570) return 100-(min-510)/60*15;
+    if(min>=330&&min<390) return 50+(min-330)/60*30;
+    if(min>570&&min<=640) return 85-(min-570)/70*25;
     if(min<330) return Math.max(0,min/330*60);
     return Math.max(0,65-(min-600)/60*30);
   }
@@ -175,9 +175,9 @@ if (typeof React !== "undefined" && typeof ReactDOM !== "undefined") window.__bo
   function scoreDeep(deep,total){
     if(!deep||!total) return 0;
     var pct=deep/total*100;
-    if(pct>=17&&pct<=28) return 100;
-    if(pct>=14&&pct<17) return 75+(pct-14)/3*25;
-    if(pct>28&&pct<=33) return 100-(pct-28)/5*15;
+    if(pct>=16&&pct<=25) return 100;
+    if(pct>=13&&pct<16) return 75+(pct-13)/3*25;
+    if(pct>25&&pct<=31) return 100-(pct-25)/6*20;
     if(pct>=10&&pct<14) return 45+(pct-10)/4*30;
     if(pct>33) return Math.max(40,85-(pct-33)*2);
     return Math.max(0,pct/10*45);
@@ -185,23 +185,24 @@ if (typeof React !== "undefined" && typeof ReactDOM !== "undefined") window.__bo
   function scoreRem(rem,total){
     if(!rem||!total) return 0;
     var pct=rem/total*100;
-    if(pct>=22&&pct<=30) return 100;
-    if(pct>=18&&pct<22) return 75+(pct-18)/4*25;
-    if(pct>30&&pct<=35) return 100-(pct-30)/5*15;
+    if(pct>=20&&pct<=28) return 100;
+    if(pct>=17&&pct<20) return 75+(pct-17)/3*25;
+    if(pct>28&&pct<=34) return 100-(pct-28)/6*15;
     if(pct>=13&&pct<18) return 45+(pct-13)/5*30;
     if(pct>35) return Math.max(40,85-(pct-35)*2);
     return Math.max(0,pct/13*45);
   }
   function scoreRhr(bpm){
     if(!bpm) return 0;
-    if(bpm<=55) return 100;
-    if(bpm<=60) return 95-(bpm-55)*1;
-    if(bpm<=65) return 85-(bpm-60)*2;
-    if(bpm<=70) return 70-(bpm-65)*3;
-    if(bpm<=75) return 55-(bpm-70)*4;
-    if(bpm<=80) return 35-(bpm-75)*3;
-    if(bpm<=90) return Math.max(0,20-(bpm-80)*2);
-    return 0;
+    // Calibrada: homem 30a, IMC 23.9. Normal AHA 60-80bpm.
+    // <47: bradicardia possivel; <=60: excelente; 60-68: bom; 68-75: normal; >75: atencao
+    if(bpm<47) return Math.max(0,80+(bpm-47)*3);
+    if(bpm<=60) return 100;
+    if(bpm<=68) return 100-(bpm-60)/8*20;
+    if(bpm<=75) return 80-(bpm-68)/7*25;
+    if(bpm<=80) return 55-(bpm-75)/5*20;
+    if(bpm<=88) return 35-(bpm-80)/8*25;
+    return Math.max(0,10-(bpm-88)*2);
   }
   function scoreConsistency(bedtimes){
     if(!bedtimes||bedtimes.length<3) return null;
@@ -341,7 +342,11 @@ if (typeof React !== "undefined" && typeof ReactDOM !== "undefined") window.__bo
       data.map(function(d,i){return "L "+px(i)+","+py(d.y);}).join(" ") +
       " L "+px(data.length-1)+","+(H-pad.b)+" L "+pad.l+","+(H-pad.b)+" Z";
 
-    var yTicks = props.yMax===100 ? [0,25,50,75,100] : (function(){
+    var yTicks = props.yMax===100 ? (function(){
+      var mn = props.yMin||0;
+      var step = (100-mn)/4;
+      return [mn, Math.round(mn+step), Math.round(mn+step*2), Math.round(mn+step*3), 100];
+    })() : (function(){
       var t=[], step=(yMax-yMin)/4;
       for(var i=0;i<=4;i++) t.push(Math.round(yMin+i*step));
       return t;
@@ -438,18 +443,22 @@ if (typeof React !== "undefined" && typeof ReactDOM !== "undefined") window.__bo
 
   function Bar100(props){
     var v = Math.max(0, Math.min(100, props.value||0));
+    var barWidth = v >= 100 ? 96 : v;
     return e("div",{className:"bar"},
-      e("div",{style:{width:v+"%",background:bandColor(v)}}),
+      e("div",{style:{width:barWidth+"%",background:bandColor(v)}}),
       e("div",{className:"bar-tick"})
     );
   }
 
   function MetricCard(props){
     var p = props.part, i = props.index;
+    var isMax = p.v != null && Math.round(p.v) >= 100;
     return e("div",{className:"metric reveal d"+Math.min(6,i+2)},
       e("div",{style:{display:"flex",alignItems:"baseline",justifyContent:"space-between"}},
         e("div",{className:"tag"}, String(i+1).padStart(2,"0")+" · "+p.label),
-        e("div",{className:"num",style:{fontSize:11,color:bandColor(p.v)}}, bandLabel(p.v))
+        isMax
+          ? e("div",{className:"num",style:{fontSize:11,color:bandColor(p.v),letterSpacing:".15em",borderBottom:"1px solid "+bandColor(p.v),paddingBottom:1}}, "MAX")
+          : e("div",{className:"num",style:{fontSize:11,color:bandColor(p.v)}}, bandLabel(p.v))
       ),
       e("div",{style:{marginTop:12,display:"flex",alignItems:"baseline",gap:12}},
         e("div",{className:"display num metric-val"}, p.v==null?"—":Math.round(p.v)),
@@ -584,17 +593,17 @@ if (typeof React !== "undefined" && typeof ReactDOM !== "undefined") window.__bo
         e("div",null,
           e("div",{className:"tag",style:{color:"var(--bone)",marginBottom:8}},"MÉTODO"),
           e("p",{style:{lineHeight:1.6}},
-            "Score composto 0–100 ponderando 6 vetores. Pesos e thresholds recalibrados com base na validação do Fitbit Inspire 2 vs polissonografia: menos peso em Deep/REM (specificity 50–59%), mais peso em FC Repouso e Duração. Soneca < 180min é descartada.")
+            "Score composto 0–100 ponderando 6 vetores. Calibrado para homem 30 anos, 80kg, 1.83m (IMC 23.9). FC Repouso: curva ajustada para população geral (não-atleta), ótimo ≤60 bpm. Duração: sweet spot 7h–8h30 per NSF 2015. Deep/REM: tetos ajustados para superestimação do Fitbit Inspire 2 vs PSG. Soneca <180min descartada.")
         ),
         e("div",null,
           e("div",{className:"tag",style:{color:"var(--bone)",marginBottom:8}},"PESOS · INSPIRE 2"),
           e("ul",{className:"num",style:{listStyle:"none",lineHeight:1.8}},
-            e("li",null,"FC REPOUSO — 25%"),
-            e("li",null,"DURAÇÃO — 22%"),
-            e("li",null,"EFICIÊNCIA — 20%"),
-            e("li",null,"REGULARIDADE — 13%"),
-            e("li",null,"DEEP — 10%"),
-            e("li",null,"REM — 10%")
+            e("li",null,"DURAÇÃO — 24%"),
+            e("li",null,"FC REPOUSO — 22%"),
+            e("li",null,"EFICIÊNCIA — 18%"),
+            e("li",null,"REGULARIDADE — 14%"),
+            e("li",null,"DEEP — 11%"),
+            e("li",null,"REM — 11%")
           )
         ),
         e("div",null,
@@ -711,7 +720,7 @@ if (typeof React !== "undefined" && typeof ReactDOM !== "undefined") window.__bo
             })
           )
         ),
-        e(LineChart,{data:trendData, yMin:0, yMax:100, area:true, color:"#B8D97A", refs:[{y:85,label:"ÓTIMO"},{y:70,label:""}]})
+        e(LineChart,{data:trendData, yMin:30, yMax:100, area:true, color:"#B8D97A", refs:[{y:85,label:"ÓTIMO"},{y:70,label:""}]})
       ),
 
       e("section",null,
